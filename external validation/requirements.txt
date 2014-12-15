@@ -1,0 +1,11 @@
+Unidecode==0.04.16
+argparse==1.2.2
+httplib2==0.9
+iso8601==0.1.10
+objectpath==0.5
+pydot==1.0.15
+pyparsing==2.0.3
+pytz==2014.10
+requests==2.4.3
+termcolor==1.1.0
+ujson==1.33
