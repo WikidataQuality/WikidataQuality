@@ -1,18 +1,8 @@
 WikidataQuality
 ===============
+WikidataQuality is a bachelor project of students from the Hasso-Plattner-Institute in cooperation with Wikimedia Deutschland e.V. and the Wikidata team.  
+Basically, the project's purpose is to ensure the data quality of Wikidata.
 
-## The team
+For more information see our [wiki](https://github.com/WikidataQuality/WikidataQuality/wiki/).
 
-**Communicator/spokesperson:**
-Tamara Slosarek<br />
-tamara.slosarek@student.hpi.de<br />
-https://github.com/tamslo
-
-**Internal project manager:**
-Andreas Burmeister<br />
-andreas.burmeister@student.hpi.de<br />
-https://github.com/andreasburmeister
-
-**Contact:**<br />
-For questions and suggestions please contact our communicator or drop us a few lines at:<br />
-BP2014N1-intern@hpi.de
+For questions and suggestions please contact our communicator (tamara.slosarek@student.hpi.de | https://github.com/tamslo)
