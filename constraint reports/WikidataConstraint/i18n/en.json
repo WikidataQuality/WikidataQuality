@@ -1,0 +1,10 @@
+{
+    "@metadata": {
+        "authors": [
+            "Andreasburmeister"
+        ]
+    },
+    "wikidataconstraint": "Wikidata Constraint",
+    "wikidataconstraint-desc": "Wikidata Constraint does fancy stuff",
+    "wikidataconstraint-summary": "On this special page, do this simple thing and earn wonders"
+}
