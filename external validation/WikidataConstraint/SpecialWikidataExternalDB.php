@@ -1,13 +1,6 @@
 <?php
 
-//include 'dbchecker/SimpleDBChecker.php'; not implemented yet
-
-use Wikibase\DataModel\Entity\Item;
-use Wikibase\DataModel\Entity\ItemId;
-use Wikibase\Repo\WikibaseRepo;
-use Wikibase\Repo\Store;
-use Wikibase\DataModel\Statement;
-use Wikibase\DataModel\Snak;
+include 'CrossChecker.php';
 
 class SpecialWikidataExternalDB extends SpecialPage {
 	function __construct() {
@@ -16,10 +9,9 @@ class SpecialWikidataExternalDB extends SpecialPage {
  
 	function execute( $par ) {
 		$this->setHeaders();
-
 		$out = $this->getContext()->getOutput();
 
-		//$out->addModules( 'ext.WikidataExternalDB' );
+		// $out->addModules( 'ext.WikidataExternalDB' );
 		$out->addWikiMsg( 'wikidataconstraint-summary' );
 		$out->addHTML( '<p>Just enter an entity and let it crosscheck against MusicBrainz.<br/>'
 			. 'Try for example <i>Qxx</i> (John Lennon) and <i>Qxx</i> (Imagine)'
@@ -30,29 +22,19 @@ class SpecialWikidataExternalDB extends SpecialPage {
 		$out->addHTML( "<input placeholder='Qxx' name='itemId' id='item-input'>" );
 		$out->addHTML( "<input type='submit' value='Cross-check' id='check-item-btn' />" );
 		$out->addHTML( "</form>" );
-		/*$out->addHTML( "<p/>" );
-		$out->addHTML( "<ul id='results-list'></ul>" );
-		$out->addHTML( "<p/>" );
-		$out->addHTML( "<div id='result'></div>" );*/
 
 		if (isset($_POST['itemId'])) {
-			$id = new ItemId( $_POST['itemId'] );
-			$lookup = WikibaseRepo::getDefaultInstance()->getStore()->getEntityLookup();
-			$entity = $lookup->getEntity($id);
-			$statementIds = $this->getStatementIds( $entity );
+			$checker = new CrossChecker();
 
-			foreach ( $statementIds as $id) {
-				$out->addWikiText( $id );
-			}
+			/* crosscheck item */
+			$result = $checker->crosscheckItem( $_POST['itemId'] );
+
+			/* result output
+			foreach ( $result as $res) {
+				$out->addWikiText( $res );
+			}*/
 		}
 	}
 
-	function getStatementIds( Item $item ) {
-		$snaks = $item->getStatements()->getAllSnaks();
-		$numericIds = array();
-		foreach ( $snaks as $snak ) {
-			$numericIds[] = $snak->getPropertyId()->getNumericId();
-		}
-		return $numericIds;
-	}
+
 }
