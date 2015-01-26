@@ -21,3 +21,6 @@ $wgAutoloadClasses['SpecialWikidataConstraint'] = __DIR__ . '/SpecialWikidataCon
 $wgMessagesDirs['WikidataConstraint'] = __DIR__ . "/i18n"; # Location of localisation files (Tell MediaWiki to load them)
 $wgExtensionMessagesFiles['WikidataConstraintAlias'] = __DIR__ . '/WikidataConstraint.alias.php'; # Location of an aliases file (Tell MediaWiki to load it)
 $wgSpecialPages['WikidataConstraint'] = 'SpecialWikidataConstraint'; # Tell MediaWiki about the new special page and its class name
+
+$wgAutoloadClasses['SpecialWikidataExternalDB'] = __DIR__ . '/WikidataExternalDB.php'; # Location of the SpecialWikidataConstraint class (Tell MediaWiki to load this file)
+$wgSpecialPages['WikidataExternalDB'] = 'SpecialWikidataExternalDB'; # Tell MediaWiki about the new special page and its class name
