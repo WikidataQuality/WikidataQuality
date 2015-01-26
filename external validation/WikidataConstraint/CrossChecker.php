@@ -119,7 +119,7 @@ class CrossChecker {
     }
 
     function getExternalEntity( $db, $pid, $extId ) {
-        $result = $db->select( DUMP_DATA_TABLE, "external_data", array( "pid=$pid", "external_id=$extId" ), __METHOD__ );
+        $result = $db->select( "wdq_external_data", "external_data", array( "pid=$pid", "external_id=$extId" ), __METHOD__ );
         foreach ( $result as $row ) {
             return $row->entity_data;
         }
