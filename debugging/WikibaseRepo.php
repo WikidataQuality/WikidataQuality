@@ -353,7 +353,7 @@ class WikibaseRepo {
 	 * @return EntityLookup
 	 */
 	public function getEntityLookup( $uncached = '' ) {
-        if ( USE_WIKIDATA_API_LOOKUP ) {
+        if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
             return new WikidataApiEntityLookup();
         }
         else {
