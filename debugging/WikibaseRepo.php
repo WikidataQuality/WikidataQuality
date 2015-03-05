@@ -35,6 +35,7 @@ use Wikibase\Lib\ClaimGuidValidator;
 use Wikibase\Lib\DispatchingValueFormatter;
 use Wikibase\Lib\EntityIdHtmlLinkFormatterFactory;
 use Wikibase\Lib\EntityIdLinkFormatter;
+use Wikibase\Lib\EntityIdValueFormatter;
 use Wikibase\Lib\EntityRetrievingDataTypeLookup;
 use Wikibase\Lib\FormatterLabelLookupFactory;
 use Wikibase\Lib\LanguageNameLookup;
@@ -352,14 +353,14 @@ class WikibaseRepo {
 	 *
 	 * @return EntityLookup
 	 */
-	public function getEntityLookup( $uncached = '' ) {
+    public function getEntityLookup( $uncached = '' ) {
         if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
             return new WikidataApiEntityLookup();
         }
         else {
             return $this->getStore()->getEntityLookup( $uncached );
         }
-	}
+    }
 
 	/**
 	 * @since 0.4
@@ -522,10 +523,15 @@ class WikibaseRepo {
 	 */
 	public function getTermLookup() {
 		if ( !$this->termLookup ) {
-			$this->termLookup = new BufferingTermLookup(
-				$this->getStore()->getTermIndex(),
-				1000 // @todo: configure buffer size
-			);
+            if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
+                $this->termLookup = new WikidataApiTermLookup();
+            }
+            else {
+                $this->termLookup = new BufferingTermLookup(
+                    $this->getStore()->getTermIndex(),
+                    1000 // @todo: configure buffer size
+                );
+            }
 		}
 
 		return $this->termLookup;
@@ -643,8 +649,7 @@ class WikibaseRepo {
 	protected function newSummaryFormatter() {
 		global $wgContLang;
 
-		$options = new FormatterOptions();
-		$idFormatter = new EntityIdLinkFormatter( $options, $this->getEntityContentFactory() );
+		$idFormatter = new EntityIdLinkFormatter( $this->getEntityContentFactory() );
 
 		$valueFormatterBuilders = $this->getValueFormatterBuilders();
 
@@ -657,7 +662,7 @@ class WikibaseRepo {
 		$valueFormatterBuilders->setValueFormatter(
 			SnakFormatter::FORMAT_PLAIN,
 			'VT:wikibase-entityid',
-			$idFormatter
+			new EntityIdValueFormatter( $idFormatter )
 		);
 
 		$snakFormatterFactory = new OutputFormatSnakFormatterFactory(
@@ -667,6 +672,7 @@ class WikibaseRepo {
 			$valueFormatterBuilders->getValueFormatterBuildersForFormats()
 		);
 
+		$options = new FormatterOptions();
 		$snakFormatter = $snakFormatterFactory->getSnakFormatter(
 			SnakFormatter::FORMAT_PLAIN,
 			$options
@@ -1004,9 +1010,8 @@ class WikibaseRepo {
 		return $this->entityNamespaceLookup;
 	}
 
-	private function getEntityIdHtmlLinkFormatter() {
+	private function getEntityIdHtmlLinkFormatterFactory() {
 		return new EntityIdHtmlLinkFormatterFactory(
-			new FormatterLabelLookupFactory( $this->getTermLookup() ),
 			$this->getEntityTitleLookup(),
 			new LanguageNameLookup()
 		);
@@ -1018,7 +1023,7 @@ class WikibaseRepo {
 	public function getEntityParserOutputGeneratorFactory() {
 
 		$entityViewFactory = new EntityViewFactory(
-			$this->getEntityIdHtmlLinkFormatter(),
+			$this->getEntityIdHtmlLinkFormatterFactory(),
 			$this->getSnakFormatterFactory(),
 			$this->getEntityLookup(),
 			$this->getSiteStore(),
