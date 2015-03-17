@@ -24,7 +24,9 @@ class WikidataApiTermLookup extends WikidataApiLookup implements TermLookup
                 'props' => 'labels'
             )
         );
-        return $entity->getFingerprint()->getLabel( $languageCode )->getText();
+        if( $entity ) {
+            return $entity->getFingerprint()->getLabel( $languageCode )->getText();
+        }
     }
 
     public function getLabels( EntityId $entityId, array $languageCodes )
@@ -36,7 +38,9 @@ class WikidataApiTermLookup extends WikidataApiLookup implements TermLookup
                 'props' => 'labels'
             )
         );
-        return $entity->getFingerprint()->getLabels( $languageCodes )->toTextArray();
+        if( $entity ) {
+            return $entity->getFingerprint()->getLabels( $languageCodes )->toTextArray();
+        }
     }
 
     public function getDescription( EntityId $entityId, $languageCode )
@@ -48,7 +52,9 @@ class WikidataApiTermLookup extends WikidataApiLookup implements TermLookup
                 'props' => 'descriptions'
             )
         );
-        return $entity->getFingerprint()->getDescription( $languageCode )->getText();
+        if( $entity ) {
+            return $entity->getFingerprint()->getDescription( $languageCode )->getText();
+        }
     }
 
     public function getDescriptions( EntityId $entityId, array $languageCodes )
@@ -60,6 +66,8 @@ class WikidataApiTermLookup extends WikidataApiLookup implements TermLookup
                 'props' => 'descriptions'
             )
         );
-        return $entity->getFingerprint()->getDescriptions( $languageCodes )->toTextArray();
+        if( $entity ) {
+            return $entity->getFingerprint()->getDescriptions( $languageCodes )->toTextArray();
+        }
     }
 }
