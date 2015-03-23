@@ -72,9 +72,9 @@ class sqlScriptBuilder:
 
 	def add_list(self, values, constraint_name):
 		if constraint_name == "Qualifiers":
-			self.parameters['property'] = values.replace("{", "").replace("}", "").replace("|", "").replace(" ", "").replace("[", "").replace("]", "")
+			self.parameters['property'] = self.to_comma_seperated_string(values)
 		else:
-			self.parameter_list = values.replace("{", "").replace("}", "").replace("|", "").replace(" ", "").replace("[", "").replace("]", "")
+			self.parameter_list = self.to_comma_seperated_string(values)
 
 	def add_status(self, values):
 		self.parameters['constraint status'] = 'mandatory'
