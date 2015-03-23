@@ -12,6 +12,8 @@ class sqlScriptBuilder:
 	MAX_CONSTRAINT_NUMBER = 2000
 	MAX_SQL_LINE_NUMBER = 1000
 
+	SQL_SCRIPT_HEAD = "INSERT INTO constraints_ready_for_migration (pid, constraint_name, class, comment, constraint_status, group_by, item, known_exception, maximum_date, maximum_quantity, minimum_date, minimum_quantity, namespace, pattern, property, relation, snak) VALUES\n"
+
 	parameters = {
 		'class': 'NULL',
 		'comment': 'NULL',
@@ -97,9 +99,6 @@ class sqlScriptBuilder:
 	def add_pattern(self, values):
 		self.parameters['pattern'] = values.replace("\\","\\\\")
 
-	def add_property(self, values):
-		self.parameters['property'] = values
-
 	def add_relation(self, values):
 		self.parameters['relation'] = values	
 
@@ -133,34 +132,34 @@ class sqlScriptBuilder:
 				self.parameters[par] = 'NULL'
 			self.outputString += ("),\n")
 
+
+	def writeOutputStringToFile(self):
+		print("writing into constraints_table" + str(self.sqlFileCounter) + ".sql")
+		with codecs.open("constraints_table" + str(self.sqlFileCounter) + ".sql", "w", "utf-8") as sql_file:
+			sql_file.write(self.outputString.rstrip(",\n"))
+
+		self.sqlFileCounter += 1
+		self.writtenLinesInSqlFile = 0
+		self.outputString = self.SQL_SCRIPT_HEAD
+
+
 	# only purpose: Build SQL-Statement to fill table with constraints
 	# fetches constraints from property talk pages
 	# nonetheless: use table layout that will suit the new way of storing 
 	# constraints as statements on properties
 
 	def run(self):
-		# File for SQL statements for constraints and their parameters
-		writtenLinesInSqlFile = 0
-		sqlFileCounter = 1
-		# print("writing into constraints_table" + str(sqlFileCounter) + ".sql")
-		# sql_file = codecs.open("constraints_table" + str(sqlFileCounter) + ".sql", "w", "utf-8")
-		self.outputString = ("INSERT INTO constraints_ready_for_migration (pid, constraint_name, class, comment, constraint_status, group_by, item, known_exception, maximum_date, maximum_quantity, minimum_date, minimum_quantity, namespace, pattern, property, relation, snak) VALUES\n")
+		self.writtenLinesInSqlFile = 0
+		self.sqlFileCounter = 1
+		self.outputString = self.SQL_SCRIPT_HEAD
 
 		#this is how every constraint template begins
 		search_string = "{{Constraint:"
 
-		# for property_number in range(1, self.MAX_CONSTRAINT_NUMBER+1):
-		for property_number in range(1, 25):
+		for property_number in range(1, self.MAX_CONSTRAINT_NUMBER+1):
 
-			if (writtenLinesInSqlFile > self.MAX_SQL_LINE_NUMBER):
-				print("writing into constraints_table" + str(sqlFileCounter) + ".sql")
-				with codecs.open("constraints_table" + str(sqlFileCounter) + ".sql", "w", "utf-8") as sql_file:
-					sql_file.write(self.outputString.rstrip(",\n"))
-
-				sqlFileCounter = sqlFileCounter + 1
-				writtenLinesInSqlFile = 0
-				self.outputString = ("INSERT INTO constraints_ready_for_migration (pid, constraint_name, class, comment, constraint_status, group_by, item, known_exception, maximum_date, maximum_quantity, minimum_date, minimum_quantity, namespace, pattern, property, relation, snak) VALUES\n")
-
+			if (self.writtenLinesInSqlFile > self.MAX_SQL_LINE_NUMBER):
+				self.writeOutputStringToFile()
 
 
 			#self.outputString += (30*"=" + "Property " + format(property_number) + 30*"=")
@@ -226,7 +225,7 @@ class sqlScriptBuilder:
 						parameter_value = constraint_parameters[equal_sign+1:next_seperator+a]
 						
 						if parameter_name == 'base_property':
-							add_property(parameter_value)
+							self.add_property(parameter_value)
 						elif parameter_name == 'class' or parameter_name == 'classes':
 							self.add_classes(parameter_value)
 						elif parameter_name == 'exceptions':
@@ -261,7 +260,7 @@ class sqlScriptBuilder:
 				
 			
 				self.write_line_in_sql_file(property_number, constraint_name)
-				writtenLinesInSqlFile = writtenLinesInSqlFile + 1
+				self.writtenLinesInSqlFile += 1
 
 				#prepare search for new constraint
 				property_talk_page = property_talk_page[end_index:]
@@ -272,9 +271,8 @@ class sqlScriptBuilder:
 				if start_index > end_of_constraint_section and end_of_constraint_section != -1:
 					break
 
-		print("writing into constraints_table" + str(sqlFileCounter) + ".sql")
-		with codecs.open("constraints_table" + str(sqlFileCounter) + ".sql", "w", "utf-8") as sql_file:
-			sql_file.write(self.outputString.rstrip(",\n"))
+
+		self.writeOutputStringToFile()
 
 
 def main():
