@@ -10,7 +10,7 @@ import unicodedata
 class sqlScriptBuilder:
 
 	MAX_CONSTRAINT_NUMBER = 2000
-	MAX_SQL_LINE_NUMBER = 25
+	MAX_SQL_LINE_NUMBER = 1000
 
 	parameters = {
 		'class': 'NULL',
