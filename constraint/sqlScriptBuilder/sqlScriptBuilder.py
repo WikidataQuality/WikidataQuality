@@ -47,19 +47,19 @@ class sqlScriptBuilder:
 		return next_seperator
 
 	def to_comma_seperated_string(self, values):
-		return values.replace("{", "").replace("}", "").replace("|", "").replace(" ", "").replace("[", "").replace("]", "")
+		return values.replace("{", "").replace("}", "").replace("|", "").replace(" ", "").replace("[", "").replace("]", "").strip()
 
 	def add_property(self, values):
-		self.parameters['property'] = values
+		self.parameters['property'] = values.strip()
 
 	def add_classes(self, values):
 		self.parameters['class'] = self.to_comma_seperated_string(values)
 
 	def add_exceptions(self, values):
-		self.parameters['known exception'] = self.to_comma_seperated_string(values)
+		self.parameters['known exception'] = self.to_comma_seperated_string(values).replace(";", ",")
 
 	def add_group_by(self, values):
-		self.parameters['group by'] = values
+		self.parameters['group by'] = values.strip()
 
 	def add_items(self, values):
 		itemString = ""
@@ -87,22 +87,22 @@ class sqlScriptBuilder:
 		#if "0000" in values or "." in values:
 		#	self.parameters['maximum date'] = values
 		#else:
-		self.parameters['maximum quantity'] = values
+		self.parameters['maximum quantity'] = values.strip()
 
 	def add_min(self, values):
 		#if "0000" in values or "." in values:
 		#	self.parameters['minimum date'] = values
 		#else:
-		self.parameters['minimum quantity'] = values
+		self.parameters['minimum quantity'] = values.strip()
 
 	def add_namespace(self, values):
-		self.parameters['namespace'] = values
+		self.parameters['namespace'] = values.strip()
 
 	def add_pattern(self, values):
-		self.parameters['pattern'] = values.replace("\\","\\\\")
+		self.parameters['pattern'] = values.replace("\\","\\\\").strip()
 
 	def add_relation(self, values):
-		self.parameters['relation'] = values	
+		self.parameters['relation'] = values.strip()	
 
 	def write_line_in_sql_file(self, property_number, constraint_name):
 		if self.parameter_list != 'NULL':
