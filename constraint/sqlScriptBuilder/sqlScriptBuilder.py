@@ -5,12 +5,14 @@ from operator import itemgetter
 import time
 import codecs
 import unicodedata
+import os
 
 
 class sqlScriptBuilder:
 
 	MAX_CONSTRAINT_NUMBER = 2000
-	MAX_SQL_LINE_NUMBER = 1000
+	MAX_SQL_LINE_NUMBER = 455
+	SQL_FILE_NAME = "constraints_table.sql"
 
 	SQL_SCRIPT_HEAD = "INSERT INTO constraints_ready_for_migration (pid, constraint_name, class, comment, constraint_status, group_by, item, known_exception, maximum_date, maximum_quantity, minimum_date, minimum_quantity, namespace, pattern, property, relation, snak) VALUES\n"
 
@@ -134,12 +136,12 @@ class sqlScriptBuilder:
 
 
 	def writeOutputStringToFile(self):
-		print("writing into constraints_table" + str(self.sqlFileCounter) + ".sql")
-		with codecs.open("constraints_table" + str(self.sqlFileCounter) + ".sql", "w", "utf-8") as sql_file:
-			sql_file.write(self.outputString.rstrip(",\n"))
+		print("writing into constraints_table.sql")
+		with codecs.open(self.SQL_FILE_NAME, "a", "utf-8") as sql_file:
+			self.outputString = self.outputString.rstrip(",\n") + ";\n\n"
+			sql_file.write(self.outputString)
 
-		self.sqlFileCounter += 1
-		self.writtenLinesInSqlFile = 0
+		self.writtenLinesInInsertStatement = 0
 		self.outputString = self.SQL_SCRIPT_HEAD
 
 
@@ -149,8 +151,11 @@ class sqlScriptBuilder:
 	# constraints as statements on properties
 
 	def run(self):
-		self.writtenLinesInSqlFile = 0
-		self.sqlFileCounter = 1
+		# delete old file
+		if os.path.exists(self.SQL_FILE_NAME):
+			os.remove(self.SQL_FILE_NAME)
+
+		self.writtenLinesInInsertStatement = 0
 		self.outputString = self.SQL_SCRIPT_HEAD
 
 		#this is how every constraint template begins
@@ -158,7 +163,7 @@ class sqlScriptBuilder:
 
 		for property_number in range(1, self.MAX_CONSTRAINT_NUMBER+1):
 
-			if (self.writtenLinesInSqlFile > self.MAX_SQL_LINE_NUMBER):
+			if (self.writtenLinesInInsertStatement > self.MAX_SQL_LINE_NUMBER):
 				self.writeOutputStringToFile()
 
 
@@ -260,7 +265,7 @@ class sqlScriptBuilder:
 				
 			
 				self.write_line_in_sql_file(property_number, constraint_name)
-				self.writtenLinesInSqlFile += 1
+				self.writtenLinesInInsertStatement += 1
 
 				#prepare search for new constraint
 				property_talk_page = property_talk_page[end_index:]
@@ -272,7 +277,8 @@ class sqlScriptBuilder:
 					break
 
 
-		self.writeOutputStringToFile()
+		if self.outputString != self.SQL_SCRIPT_HEAD:
+			self.writeOutputStringToFile()
 
 
 def main():
