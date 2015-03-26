@@ -6,7 +6,7 @@ Instead of importing or creating entites, the ```WikidataEntityLookup``` can be 
 
 ### Installation
 1. Make sure, that the Wikidata extension is up to date. Otherwise update it first by running ```git pull``` and ```composer update``` in ```/extensions/Wikidata```. 
-2. Copy/Overwrite the files ```WikidataApiEntityLookup.php``` and ```WikibaseRepo.php``` to ```/extensions/Wikidata/extensions/Wikibase/repo/includes```.
+2. Copy/Overwrite the files ```WikidataApiLookup.php```, ```WikidataApiTermLookup.php```, ```WikidataApiEntityLookup.php``` and ```WikibaseRepo.php``` to ```/extensions/Wikidata/extensions/Wikibase/repo/includes```.
 3. Run ```composer update``` in ```/extensions/Wikidata```. If composer asks you about changes, stash them by typing ```s```.
 
 ### Usage
