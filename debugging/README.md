@@ -10,9 +10,11 @@ Instead of importing or creating entites, the ```WikidataEntityLookup``` can be 
 3. Run ```composer update``` in ```/extensions/Wikidata```. If composer asks you about changes, stash them by typing ```s```.
 
 ### Usage
-To enable the ```WikidataApiEntityLookup```, you have to set the following constant
+To enable the ```WikidataApiEntityLookup```, you have to set the following constant in ```/extensions/Wikidata/extensions/Wikibase/repo/Wikibase.php```
 ```php
-define("USE_WIKIDATA_API_LOOKUP", true);
+if ( !defined( 'MW_PHPUNIT_TEST' ) ) {
+	define('USE_WIKIDATA_API_LOOKUP', true);
+}
 ```
 After that each time you call the function
 ```php
