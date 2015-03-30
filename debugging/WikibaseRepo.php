@@ -32,8 +32,8 @@ use Wikibase\LanguageFallbackChainFactory;
 use Wikibase\Lib\Changes\EntityChangeFactory;
 use Wikibase\Lib\ClaimGuidGenerator;
 use Wikibase\Lib\ClaimGuidValidator;
+use Wikibase\Lib\ContentLanguages;
 use Wikibase\Lib\DispatchingValueFormatter;
-use Wikibase\Lib\EntityIdHtmlLinkFormatterFactory;
 use Wikibase\Lib\EntityIdLinkFormatter;
 use Wikibase\Lib\EntityIdValueFormatter;
 use Wikibase\Lib\EntityRetrievingDataTypeLookup;
@@ -353,14 +353,14 @@ class WikibaseRepo {
 	 *
 	 * @return EntityLookup
 	 */
-    public function getEntityLookup( $uncached = '' ) {
-        if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
+	public function getEntityLookup( $uncached = '' ) {
+		if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
             return new WikidataApiEntityLookup();
         }
         else {
             return $this->getStore()->getEntityLookup( $uncached );
         }
-    }
+	}
 
 	/**
 	 * @since 0.4
@@ -523,7 +523,7 @@ class WikibaseRepo {
 	 */
 	public function getTermLookup() {
 		if ( !$this->termLookup ) {
-            if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
+			if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
                 $this->termLookup = new WikidataApiTermLookup();
             }
             else {
@@ -770,7 +770,7 @@ class WikibaseRepo {
 
 		return new MessageParameterFormatter(
 			new DispatchingValueFormatter( $valueFormatters ),
-			$this->getEntityTitleLookup(),
+			new EntityIdLinkFormatter( $this->getEntityTitleLookup() ),
 			$this->getSiteStore(),
 			$wgLang
 		);
@@ -1024,7 +1024,7 @@ class WikibaseRepo {
 
 		$entityViewFactory = new EntityViewFactory(
 			$this->getEntityIdHtmlLinkFormatterFactory(),
-			$this->getSnakFormatterFactory(),
+			$this->getHtmlSnakFormatterFactory(),
 			$this->getEntityLookup(),
 			$this->getSiteStore(),
 			$this->getDataTypeFactory(),
@@ -1072,6 +1072,10 @@ class WikibaseRepo {
 	 */
 	public function getTermsLanguages() {
 		return new WikibaseContentLanguages();
+	}
+
+	private function getHtmlSnakFormatterFactory() {
+		return new WikibaseHtmlSnakFormatterFactory( $this->getSnakFormatterFactory() );
 	}
 
 }
