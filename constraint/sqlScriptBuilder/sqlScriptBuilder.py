@@ -10,11 +10,11 @@ import os
 
 class sqlScriptBuilder:
 
-	MAX_CONSTRAINT_NUMBER = 2000
+	MAX_PROPERTY_NUMBER = 2000
 	MAX_SQL_LINE_NUMBER = 455
-	SQL_FILE_NAME = "constraints_table.sql"
+	SQL_FILE_NAME = "fill_wdq_constraints_from_templates.sql"
 
-	SQL_SCRIPT_HEAD = "INSERT INTO constraints_ready_for_migration (pid, constraint_name, class, comment, constraint_status, group_by, item, known_exception, maximum_date, maximum_quantity, minimum_date, minimum_quantity, namespace, pattern, property, relation, snak) VALUES\n"
+	SQL_SCRIPT_HEAD = "INSERT INTO wdq_constraints (pid, constraint_name, class, comment, constraint_status, group_by, item, known_exception, maximum_date, maximum_quantity, minimum_date, minimum_quantity, namespace, pattern, property, relation, snak) VALUES\n"
 
 	parameters = {
 		'class': 'NULL',
@@ -136,7 +136,7 @@ class sqlScriptBuilder:
 
 
 	def writeOutputStringToFile(self):
-		print("writing into constraints_table.sql")
+		print("writing into " + self.SQL_FILE_NAME)
 		with codecs.open(self.SQL_FILE_NAME, "a", "utf-8") as sql_file:
 			self.outputString = self.outputString.rstrip(",\n") + ";\n\n"
 			sql_file.write(self.outputString)
@@ -161,7 +161,7 @@ class sqlScriptBuilder:
 		#this is how every constraint template begins
 		search_string = "{{Constraint:"
 
-		for property_number in range(1, self.MAX_CONSTRAINT_NUMBER+1):
+		for property_number in range(1, self.MAX_PROPERTY_NUMBER+1):
 
 			if (self.writtenLinesInInsertStatement > self.MAX_SQL_LINE_NUMBER):
 				self.writeOutputStringToFile()
@@ -169,7 +169,7 @@ class sqlScriptBuilder:
 
 			#self.outputString += (30*"=" + "Property " + format(property_number) + 30*"=")
 			if property_number % 10 == 0:
-				print(format(property_number) + "/" + format(self.MAX_CONSTRAINT_NUMBER))
+				print(format(property_number) + "/" + format(self.MAX_PROPERTY_NUMBER))
 			property_talk_page = requests.get("http://www.wikidata.org/w/index.php?title=Property_talk:P" + str(property_number) + "&action=edit").text
 			
 			# check if property exists
