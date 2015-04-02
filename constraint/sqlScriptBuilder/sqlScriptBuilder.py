@@ -109,7 +109,7 @@ class sqlScriptBuilder:
 			for line in self.parameter_list.split(';'):
 				self.outputString += ( '(' + format(property_number) + ', \"' + constraint_name.strip() + '\"' )
 				if ':' in line:
-					self.parameters['class'] = line[line.index(':')+1:]
+					self.parameters['item'] = line[line.index(':')+1:]
 					self.parameters['property'] = line[:line.index(':')]
 				else:
 					self.parameters['property'] = line
@@ -118,7 +118,7 @@ class sqlScriptBuilder:
 						self.outputString += (", NULL")
 					else:
 						self.outputString += (", \"" + self.parameters[par] + "\"")
-				self.parameters['class'] = 'NULL'
+				self.parameters['item'] = 'NULL'
 				self.parameters['property'] = 'NULL'
 				self.outputString += ("),\n")
 			for par in self.parameters:
