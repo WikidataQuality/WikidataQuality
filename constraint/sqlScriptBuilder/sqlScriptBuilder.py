@@ -110,7 +110,7 @@ class sqlScriptBuilder:
 				self.outputString += ( '(' + format(property_number) + ', \"' + constraint_name.strip() + '\"' )
 				if ':' in line:
 					self.parameters['class'] = line[line.index(':')+1:]
-					self.parameters['property'] = line[:line.index(':')-1]
+					self.parameters['property'] = line[:line.index(':')]
 				else:
 					self.parameters['property'] = line
 				for par in sorted(self.parameters):
