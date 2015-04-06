@@ -75,7 +75,7 @@ class sqlScriptBuilder:
 			self.parameters['snak'] = snakString.rstrip(",")
 
 	def add_list(self, values, constraint_name):
-		if constraint_name == "Qualifiers":
+		if constraint_name == "Qualifiers" or constraint_name == "Mandatory qualifiers":
 			self.parameters['property'] = self.to_comma_seperated_string(values)
 		else:
 			self.parameter_list = self.to_comma_seperated_string(values)
@@ -144,6 +144,30 @@ class sqlScriptBuilder:
 		self.writtenLinesInInsertStatement = 0
 		self.outputString = self.SQL_SCRIPT_HEAD
 
+	def deleteNoWikiAndComments(self, property_talk_page):
+		property_talk_page.replace("&lt;nowiki>","").replace("&lt;/nowiki>","").replace("&amp;lt;nowiki&amp;lt;","").replace("&amp;lt;/nowiki&amp;gt;","")
+			
+		start = property_talk_page.find("{{Constraint:")
+		 	
+		authority_pos = property_talk_page.find('{{Authority control properties}}') 
+		normalization_pos = property_talk_page.find('== parameter value normalization ==')	
+		end = authority_pos if normalization_pos < authority_pos else normalization_pos
+		if( end != -1):
+			property_talk_page = property_talk_page[start:end]
+		else:
+			property_talk_page = property_talk_page[start:]
+
+		#delete <!-- --> comments from site
+		open_index = property_talk_page.find("&lt;!--")
+		while (open_index) != -1:
+			close_index = property_talk_page.find("-->", open_index)
+			if(close_index == -1):
+				break
+				
+			property_talk_page = property_talk_page[:open_index] + property_talk_page[close_index+3:]
+			
+			open_index = property_talk_page.find("&lt;!--")	
+		return property_talk_page
 
 	# only purpose: Build SQL-Statement to fill table with constraints
 	# fetches constraints from property talk pages
@@ -176,6 +200,9 @@ class sqlScriptBuilder:
 			if property_talk_page.find("Creating Property talk") != -1:
 				continue;
 
+			#delete <nowiki> </nowiki> tags from property_talk_page 
+			property_talk_page = self.deleteNoWikiAndComments(property_talk_page)
+
 			# indices for the first and last character belonging to a respective constraint
 			start_index = end_index = None
 			
@@ -200,6 +227,8 @@ class sqlScriptBuilder:
 				
 				#extract constraint
 				constraint_string = property_talk_page[:end_index]
+
+				
 				constraint_name = None
 				constraint_parameters = None
 				self.parameter_list = 'NULL'
@@ -211,16 +240,6 @@ class sqlScriptBuilder:
 				else:			
 					constraint_name = constraint_string[:delimiter_index]
 					constraint_parameters = constraint_string[delimiter_index+1:]
-
-					#delete <nowiki> </nowiki> tags from parameters 
-					constraint_parameters = constraint_parameters.replace("&lt;nowiki>","").replace("&lt;/nowiki>","").replace("&amp;lt;nowiki&amp;lt;","").replace("&amp;lt;/nowiki&amp;gt;","")
-					
-					#delete <!-- --> comments from parameters
-					open_index = constraint_parameters.find("&lt;!--")
-					while (open_index) != -1:
-						close_index = constraint_parameters.find("-->")
-						constraint_parameters = constraint_parameters[:open_index] + constraint_parameters[close_index+3:]
-						open_index = constraint_parameters.find("&lt;!--")
 
 					while constraint_parameters != None and constraint_parameters.find('=') != -1:
 						equal_sign = constraint_parameters.find('=')
@@ -257,7 +276,8 @@ class sqlScriptBuilder:
 							self.add_relation(parameter_value)
 						elif parameter_name == 'value' or parameter_name == 'values':
 							self.add_items(parameter_value)
-						# TODO: value --> class? 
+						elif parameter_name == 'required' and parameter_value == 'true':
+							constraint_name = 'Mandatory qualifiers'
 						
 
 
