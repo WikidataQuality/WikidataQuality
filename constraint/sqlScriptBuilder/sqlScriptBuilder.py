@@ -6,33 +6,18 @@ import time
 import codecs
 import unicodedata
 import os
-
+import json
+import uuid
 
 class sqlScriptBuilder:
 
 	MAX_PROPERTY_NUMBER = 2000
 	MAX_SQL_LINE_NUMBER = 455
-	SQL_FILE_NAME = "fill_wdq_constraints_from_templates.sql"
+	SQL_FILE_NAME = "fill_wdq_constraints_from_templates_with_json_blob.sql"
 
-	SQL_SCRIPT_HEAD = "INSERT INTO wdq_constraints (pid, constraint_name, class, comment, constraint_status, group_by, item, known_exception, maximum_date, maximum_quantity, minimum_date, minimum_quantity, namespace, pattern, property, relation, snak) VALUES\n"
+	SQL_SCRIPT_HEAD = "INSERT INTO wdq_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES\n"
 
-	parameters = {
-		'class': 'NULL',
-		'comment': 'NULL',
-		'constraint status': 'NULL',
-		'group by': 'NULL',
-		'item': 'NULL',
-		'known exception': 'NULL',
-		'maximum date': 'NULL',
-		'maximum quantity': 'NULL',
-		'minimum date': 'NULL',
-		'minimum quantity': 'NULL',
-		'namespace': 'NULL',
-		'pattern': 'NULL',
-		'property': 'NULL',
-		'relation': 'NULL',
-		'snak': 'NULL'
-	}
+	parameters = {}
 
 	def find_next_seperator(self, constraint_parameters, equal_sign):
 		next_equal_sign = constraint_parameters.find('=', equal_sign + 1)
@@ -56,10 +41,10 @@ class sqlScriptBuilder:
 		self.parameters['class'] = self.to_comma_seperated_string(values)
 
 	def add_exceptions(self, values):
-		self.parameters['known exception'] = self.to_comma_seperated_string(values).replace(";", ",")
+		self.parameters['known_exception'] = self.to_comma_seperated_string(values).replace(";", ",")
 
 	def add_group_by(self, values):
-		self.parameters['group by'] = values.strip()
+		self.parameters['group_by'] = values.strip()
 
 	def add_items(self, values):
 		itemString = ""
@@ -78,22 +63,22 @@ class sqlScriptBuilder:
 		if constraint_name == "Qualifiers" or constraint_name == "Mandatory qualifiers":
 			self.parameters['property'] = self.to_comma_seperated_string(values)
 		else:
-			self.parameter_list = self.to_comma_seperated_string(values)
+			self.list_parameter = self.to_comma_seperated_string(values)
 
 	def add_status(self, values):
-		self.parameters['constraint status'] = 'mandatory'
+		self.parameters['constraint_status'] = 'mandatory'
 
 	def add_max(self, values):
 		#if "0000" in values or "." in values:
 		#	self.parameters['maximum date'] = values
 		#else:
-		self.parameters['maximum quantity'] = values.strip()
+		self.parameters['maximum_quantity'] = values.strip()
 
 	def add_min(self, values):
 		#if "0000" in values or "." in values:
 		#	self.parameters['minimum date'] = values
 		#else:
-		self.parameters['minimum quantity'] = values.strip()
+		self.parameters['minimum_quantity'] = values.strip()
 
 	def add_namespace(self, values):
 		self.parameters['namespace'] = values.strip()
@@ -104,36 +89,44 @@ class sqlScriptBuilder:
 	def add_relation(self, values):
 		self.parameters['relation'] = values.strip()	
 
-	def write_line_in_sql_file(self, property_number, constraint_name):
-		if self.parameter_list != 'NULL':
-			for line in self.parameter_list.split(';'):
-				self.outputString += ( '(' + format(property_number) + ', \"' + constraint_name.strip() + '\"' )
-				if ':' in line:
-					self.parameters['item'] = line[line.index(':')+1:]
-					self.parameters['property'] = line[:line.index(':')]
-				else:
-					self.parameters['property'] = line
-				for par in sorted(self.parameters):
-					if self.parameters[par] == 'NULL':
-						self.outputString += (", NULL")
-					else:
-						self.outputString += (", \"" + self.parameters[par] + "\"")
-				self.parameters['item'] = 'NULL'
-				self.parameters['property'] = 'NULL'
-				self.outputString += ("),\n")
-			for par in self.parameters:
-				self.parameters[par] = 'NULL'
-			self.parameter_list = 'NULL'
-		else:
-			self.outputString += ( '(' + format(property_number) + ', \"' + constraint_name.strip() + '\"' )
-			for par in sorted(self.parameters):
-				if self.parameters[par] == 'NULL':
-					self.outputString += (", NULL")
-				else:
-					self.outputString += (", \"" + self.parameters[par] + "\"")
-				self.parameters[par] = 'NULL'
-			self.outputString += ("),\n")
+	def write_one_line(self, property_number, constraint_name):
+		self.write_first_three_columns(property_number, constraint_name)
+		self.write_blob()
+		self.reset_parameter()
 
+	def write_multiple_lines(self, property_number, constraint_name):
+		for line in self.list_parameter.split(';'):
+			self.write_first_three_columns(property_number, constraint_name)
+			self.split_list_parameter(line)
+			self.write_blob()	
+			self.parameters.pop('item', None)
+		self.reset_parameter
+
+	def write_line_in_sql_file(self, property_number, constraint_name):
+		if self.list_parameter != 'NULL':
+			self.write_multiple_lines(property_number, constraint_name)
+		else:
+			self.write_one_line(property_number, constraint_name)
+
+	def split_list_parameter(self, line):
+		if ':' in line:
+			self.parameters['item'] = line[line.index(':')+1:]
+			self.parameters['property'] = line[:line.index(':')]
+		else:
+			self.parameters['property'] = line
+
+
+	def write_first_three_columns(self, property_number, constraint_name):
+		self.outputString += ( '(' + '"' + str(uuid.uuid4()) + '", ' + format(property_number) + ', \"' + constraint_name.strip() + '\", ' )
+
+	def write_blob(self):
+		json_blob_string = json.dumps(json.dumps(self.parameters)).replace("&lt;nowiki>","").replace("&lt;/nowiki>","").replace("&amp;lt;nowiki&amp;lt;","").replace("&amp;lt;/nowiki&amp;gt;","").replace("<nowiki>","").replace("</nowiki>","")
+		self.outputString += json_blob_string
+		self.outputString += ("),\n")
+
+	def reset_parameter(self):
+		self.parameters = {}
+		self.list_parameter = 'NULL'
 
 	def writeOutputStringToFile(self):
 		print("writing into " + self.SQL_FILE_NAME)
@@ -144,14 +137,10 @@ class sqlScriptBuilder:
 		self.writtenLinesInInsertStatement = 0
 		self.outputString = self.SQL_SCRIPT_HEAD
 
-	def deleteNoWikiAndComments(self, property_talk_page):
-		property_talk_page.replace("&lt;nowiki>","").replace("&lt;/nowiki>","").replace("&amp;lt;nowiki&amp;lt;","").replace("&amp;lt;/nowiki&amp;gt;","")
-			
+	def get_constraint_part(self, property_talk_page):
 		start = property_talk_page.find("{{Constraint:")
 		 	
-		authority_pos = property_talk_page.find('{{Authority control properties}}') 
-		normalization_pos = property_talk_page.find('== parameter value normalization ==')	
-		end = authority_pos if normalization_pos < authority_pos else normalization_pos
+		end = property_talk_page.find("==")
 		if( end != -1):
 			property_talk_page = property_talk_page[start:end]
 		else:
@@ -201,7 +190,7 @@ class sqlScriptBuilder:
 				continue;
 
 			#delete <nowiki> </nowiki> tags from property_talk_page 
-			property_talk_page = self.deleteNoWikiAndComments(property_talk_page)
+			property_talk_page = self.get_constraint_part(property_talk_page)
 
 			# indices for the first and last character belonging to a respective constraint
 			start_index = end_index = None
@@ -231,7 +220,7 @@ class sqlScriptBuilder:
 				
 				constraint_name = None
 				constraint_parameters = None
-				self.parameter_list = 'NULL'
+				self.list_parameter = 'NULL'
 
 				delimiter_index = constraint_string.find('|')
 
