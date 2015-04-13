@@ -70,6 +70,15 @@ class sqlScriptBuilder:
 		date['minute'] = self.get_minute(entry)
 		return date
 
+	def parse_date_from_timestamp(self, timestamp):
+		date = {}
+		date['year'] = int(timestamp[0:4])
+		date['month'] = int(timestamp[4:6])
+		date['day'] = int(timestamp[6:8])
+		date['hour'] = int(timestamp[8:10])
+		date['minute'] = int(timestamp[10:12])
+		return date
+
 	def is_in_time(self, entry, date):
 		date_of_entry = self.parse_date(entry)
 		if date_of_entry['year'] > date['year']:
@@ -123,20 +132,19 @@ class sqlScriptBuilder:
 #		if os.path.exists(self.FILE_NAME):
 #			os.remove(self.FILE_NAME)
 
-		response = requests.get("http://www.wikidata.org/w/index.php?title=Q42&offset=&limit=20&action=history").text
-		test = codecs.open(self.FILE_NAME, "a", "utf-8")
-		test.write(response)
+#		test = codecs.open(self.FILE_NAME, "a", "utf-8")
+#		test.write(response)
 
-		date_of_visit_of_special_page = {
-			'year' : 2015,
-			'month' : 3,
-			'day' : 8,
-			'hour' : 10,
-			'minute' : 10
-		}
-
-		edits = self.get_amount_of_edits_since(date_of_visit_of_special_page, response)
-		print(edits)
+		special_page_views = codecs.open("special_page_views.csv", "r", "utf-8")
+		
+		for line in special_page_views:
+			single_view = line.split(';')
+			date_of_visit_of_special_page = self.parse_date_from_timestamp(single_view[1])
+			entity = single_view[0]
+			response = requests.get("http://www.wikidata.org/w/index.php?title=" + entity + "&offset=&limit=20&action=history").text
+			edits = self.get_amount_of_edits_since(date_of_visit_of_special_page, response)
+			print(entity, edits)
+			print()
 			
 
 def main():
