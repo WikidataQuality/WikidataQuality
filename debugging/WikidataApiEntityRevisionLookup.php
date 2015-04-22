@@ -4,6 +4,7 @@ namespace Wikibase\Repo;
 
 
 use Wikibase\DataModel\Entity\EntityId;
+use Wikibase\EntityRevision;
 use Wikibase\Lib\Store\EntityRevisionLookup;
 
 class WikidataApiEntityRevisionLookup extends WikidataApiLookup implements EntityRevisionLookup {
@@ -11,10 +12,19 @@ class WikidataApiEntityRevisionLookup extends WikidataApiLookup implements Entit
     /**
      * @param EntityId $entityId
      * @param int|string $revisionId
-     * @throws \Exception
+     * @returns EntityRevision|null
      */
     public function getEntityRevision( EntityId $entityId, $revisionId = self::LATEST_FROM_SLAVE ) {
-        throw new \Exception( 'Not supported for API lookup.' );
+        $parameter = array(
+            'ids' => $entityId->getSerialization()
+        );
+        $responseBody = $this->sendRequest( $parameter );
+        $entityJson = $this->parseApiResponse( $entityId, $responseBody );
+        if( $entityJson ) {
+            $entity = $this->entityDeserializer->deserialize( $entityJson );
+
+            return new EntityRevision( $entity, $entityJson[ 'lastrevid' ] );
+        }
     }
 
     /**
@@ -28,9 +38,13 @@ class WikidataApiEntityRevisionLookup extends WikidataApiLookup implements Entit
             'props' => 'info'
         );
         $responseBody = $this->sendRequest( $parameter );
-        $responseBodyJson = json_decode( $responseBody, true );
-        $revisionId = $responseBodyJson[ 'entities' ][ (string)$entityId ][ 'lastrevid' ];
+        $entityJson = $this->parseApiResponse( $entityId, $responseBody );
 
-        return $revisionId;
+        if( $entityJson ) {
+            return $entityJson[ 'lastrevid' ];
+        }
+        else {
+            return false;
+        }
     }
 }

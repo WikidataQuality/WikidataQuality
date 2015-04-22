@@ -520,7 +520,10 @@ class WikibaseRepo {
 	 * @return TermBuffer
 	 */
 	public function getTermBuffer() {
-		return $this->getTermLookup();
+        return new BufferingTermLookup(
+            $this->getStore()->getTermIndex(),
+            1000 // @todo: configure buffer size
+        );
 	}
 
 	/**
