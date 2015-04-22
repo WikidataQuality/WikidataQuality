@@ -35,9 +35,10 @@ use Wikibase\Lib\ClaimGuidValidator;
 use Wikibase\Lib\ContentLanguages;
 use Wikibase\Lib\DispatchingValueFormatter;
 use Wikibase\Lib\EntityIdLinkFormatter;
+use Wikibase\Lib\EntityIdPlainLinkFormatter;
 use Wikibase\Lib\EntityIdValueFormatter;
 use Wikibase\Lib\EntityRetrievingDataTypeLookup;
-use Wikibase\Lib\FormatterLabelLookupFactory;
+use Wikibase\Lib\FormatterLabelDescriptionLookupFactory;
 use Wikibase\Lib\LanguageNameLookup;
 use Wikibase\Lib\Localizer\DispatchingExceptionLocalizer;
 use Wikibase\Lib\Localizer\ExceptionLocalizer;
@@ -70,7 +71,6 @@ use Wikibase\Repo\Notifications\ChangeTransmitter;
 use Wikibase\Repo\Notifications\DatabaseChangeTransmitter;
 use Wikibase\Repo\Notifications\DummyChangeTransmitter;
 use Wikibase\Repo\Store\EntityPermissionChecker;
-use Wikibase\Repo\View\EntityViewFactory;
 use Wikibase\Settings;
 use Wikibase\SettingsArray;
 use Wikibase\SnakFactory;
@@ -81,13 +81,13 @@ use Wikibase\Store\EntityIdLookup;
 use Wikibase\Store\TermBuffer;
 use Wikibase\StringNormalizer;
 use Wikibase\SummaryFormatter;
-use Wikibase\Template\TemplateFactory;
-use Wikibase\Template\TemplateRegistry;
 use Wikibase\Validators\EntityConstraintProvider;
 use Wikibase\Validators\SnakValidator;
 use Wikibase\Validators\TermValidatorFactory;
 use Wikibase\Validators\ValidatorErrorLocalizer;
 use Wikibase\ValuesFinder;
+use Wikibase\View\EntityViewFactory;
+use Wikibase\View\Template\TemplateFactory;
 
 /**
  * Top level factory for the WikibaseRepo extension.
@@ -303,8 +303,12 @@ class WikibaseRepo {
 	 * @return EntityRevisionLookup
 	 */
 	public function getEntityRevisionLookup( $uncached = '' ) {
-		return $this->getStore()->getEntityRevisionLookup( $uncached );
-	}
+		if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
+            return new WikidataApiEntityRevisionLookup();
+        }
+        else {
+            return $this->getStore()->getEntityRevisionLookup( $uncached );
+        }	}
 
 	/**
 	 * @since 0.5
@@ -419,7 +423,8 @@ class WikibaseRepo {
 			$this->getClaimGuidValidator(),
 			$this->getClaimGuidParser(),
 			$this->getSnakValidator(),
-			$this->getTermValidatorFactory()
+			$this->getTermValidatorFactory(),
+			$this->getSiteStore()
 		);
 	}
 
@@ -556,7 +561,7 @@ class WikibaseRepo {
 
 		return new WikibaseValueFormatterBuilders(
 			$wgContLang,
-			new FormatterLabelLookupFactory( $termLookup ),
+			new FormatterLabelDescriptionLookupFactory( $termLookup ),
 			new LanguageNameLookup(),
 			$this->getEntityTitleLookup()
 		);
@@ -649,7 +654,10 @@ class WikibaseRepo {
 	protected function newSummaryFormatter() {
 		global $wgContLang;
 
-		$idFormatter = new EntityIdLinkFormatter( $this->getEntityContentFactory() );
+		// This needs to use an EntityIdPlainLinkFormatter as we want to mangle
+		// the links created in LinkBeginHookHandler afterwards (the links must not
+		// contain a display text: [[Item:Q1]] is fine but [[Item:Q1|Q1]] isn't).
+		$idFormatter = new EntityIdPlainLinkFormatter( $this->getEntityContentFactory() );
 
 		$valueFormatterBuilders = $this->getValueFormatterBuilders();
 
@@ -713,8 +721,7 @@ class WikibaseRepo {
 			$maxLength,
 			$languages,
 			$this->getEntityIdParser(),
-			$this->getLabelDescriptionDuplicateDetector(),
-			$this->getStore()->newSiteLinkCache()
+			$this->getLabelDescriptionDuplicateDetector()
 		);
 	}
 
@@ -724,7 +731,7 @@ class WikibaseRepo {
 	public function getEntityConstraintProvider() {
 		return new EntityConstraintProvider(
 			$this->getLabelDescriptionDuplicateDetector(),
-			$this->getStore()->newSiteLinkCache()
+			$this->getStore()->getSiteLinkConflictLookup()
 		);
 	}
 
@@ -921,7 +928,7 @@ class WikibaseRepo {
 		$codec = $this->getEntityContentDataCodec();
 		$constraintProvider = $this->getEntityConstraintProvider();
 		$errorLocalizer = $this->getValidatorErrorLocalizer();
-		$siteLinkStore = $this->getStore()->newSiteLinkCache();
+		$siteLinkStore = $this->getStore()->newSiteLinkStore();
 		$legacyFormatDetector = $this->getLegacyFormatDetectorCallback();
 
 		$handler = new ItemHandler(
@@ -1010,7 +1017,10 @@ class WikibaseRepo {
 		return $this->entityNamespaceLookup;
 	}
 
-	private function getEntityIdHtmlLinkFormatterFactory() {
+	/**
+	 * @return EntityIdHtmlLinkFormatterFactory
+	 */
+	public function getEntityIdHtmlLinkFormatterFactory() {
 		return new EntityIdHtmlLinkFormatterFactory(
 			$this->getEntityTitleLookup(),
 			new LanguageNameLookup()
@@ -1021,14 +1031,14 @@ class WikibaseRepo {
 	 * @return EntityParserOutputGeneratorFactory
 	 */
 	public function getEntityParserOutputGeneratorFactory() {
-
+		$templateFactory = TemplateFactory::getDefaultInstance();
 		$entityViewFactory = new EntityViewFactory(
 			$this->getEntityIdHtmlLinkFormatterFactory(),
+			new EntityIdLabelFormatterFactory(),
 			$this->getHtmlSnakFormatterFactory(),
-			$this->getEntityLookup(),
 			$this->getSiteStore(),
 			$this->getDataTypeFactory(),
-			new TemplateFactory( TemplateRegistry::getDefaultInstance() ),
+			$templateFactory,
 			new LanguageNameLookup(),
 			$this->getSettings()->getSetting( 'siteLinkGroups' ),
 			$this->getSettings()->getSetting( 'specialSiteLinkGroups' ),
@@ -1039,9 +1049,9 @@ class WikibaseRepo {
 			$entityViewFactory,
 			$this->getStore()->getEntityInfoBuilderFactory(),
 			$this->getEntityContentFactory(),
-			$this->getEntityIdParser(),
 			new ValuesFinder( $this->getPropertyDataTypeLookup() ),
-			$this->getLanguageFallbackChainFactory()
+			$this->getLanguageFallbackChainFactory(),
+			$templateFactory
 		);
 	}
 
