@@ -1,4 +1,4 @@
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("b116d830-10cd-4cd1-96a1-871e9502a759", 6, "Type", "{\"class\": \"Q1048835,Q56061\", \"relation\": \"instance\"}"),
 ("fd528432-501a-4dc3-be32-fbab786c6b54", 6, "Value type", "{\"class\": \"Q5\", \"relation\": \"instance\", \"known_exception\": \"Q39\"}"),
 ("74aaec3c-be96-4706-991f-f87f5077bf73", 6, "Target required claim", "{\"property\": \"P21\"}"),
@@ -465,7 +465,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("c147ad96-0a61-4f86-94ea-4795b60603f0", 194, "Single value", "{\"known_exception\": \"Q183,Q458\"}"),
 ("e8f3cffd-f585-4318-a06a-50a01969093a", 194, "Unique value", "{\"known_exception\": \"Q1371388\"}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("8b0e67fb-2f9d-419b-bdd3-16e71e33b623", 195, "Value type", "{\"class\": \"Q35120\", \"relation\": \"instance\"}"),
 ("3c9bcbdc-c0ea-4f3b-a727-dae2b7c464ac", 195, "Item", "{\"property\": \"P217\"}"),
 ("6490bcd5-1f73-4bb3-93e6-eb3da28ce10b", 195, "Value type", "{\"class\": \"Q2668072,Q43229,Q811979\", \"relation\": \"instance\"}"),
@@ -939,7 +939,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("0d3c7c90-19fe-475d-80ba-bb7d932db114", 405, "Item", "{\"property\": \"P105\"}"),
 ("f24872cc-0666-4fd4-8d90-d8e6bfacb286", 405, "Qualifier", "{}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("6c3954b2-301d-4d82-8088-26013363c163", 406, "Type", "{\"class\": \"Q386724\", \"relation\": \"instance\", \"constraint_status\": \"mandatory\"}"),
 ("f90b4586-15ea-41a6-8e57-9ac4f2a611e6", 406, "Value type", "{\"class\": \"Q4176708\", \"relation\": \"instance\"}"),
 ("27c454b0-3b63-4427-9a61-34873c409ad2", 407, "Type", "{\"class\": \"Q386724\", \"relation\": \"instance\"}"),
@@ -1401,7 +1401,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("b2c2df67-d30c-40dd-9668-56439c7ae5ed", 555, "Item", "{\"property\": \"P569\", \"constraint_status\": \"mandatory\"}"),
 ("672cdca5-f091-440d-a0bc-4b9d169293ec", 555, "Item", "{\"property\": \"P19\"}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("e9ca2280-8365-408a-b191-9dad0c15d6e3", 556, "Value type", "{\"class\": \"Q898786\", \"relation\": \"instance\", \"constraint_status\": \"mandatory\"}"),
 ("c5ed79b5-9969-4a37-a3f3-f4e6ef130c76", 556, "One of", "{\"item\": \"Q376927,Q624543,Q648961,Q503601,Q588274,Q663314,Q473227,Q263214,Q103382,Q17000005\", \"constraint_status\": \"mandatory\"}"),
 ("2508bd20-63fe-4f67-a7c2-07ce3772718f", 556, "Single value", "{}"),
@@ -1866,7 +1866,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("d0104c06-ba13-4a8c-8d0e-86ace720dbc3", 724, "Unique value", "{\"constraint_status\": \"mandatory\"}"),
 ("fe5b3034-b9fe-4553-bd20-4352a54830c7", 724, "Format", "{\"pattern\": \"[A-Za-z0-9\\\\\\\\._-]+\", \"constraint_status\": \"mandatory\"}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("2a29a511-b136-43d4-a5f3-f079b828dad7", 725, "Type", "{\"class\": \"Q11424\", \"relation\": \"instance\"}"),
 ("12e92594-4d00-4261-b4b2-c999578f2836", 725, "Value type", "{\"class\": \"Q5\", \"relation\": \"instance\"}"),
 ("ed60ede8-a22f-4cca-9ec7-42bc61f4aa7d", 725, "Target required claim", "{\"property\": \"P21\"}"),
@@ -2331,7 +2331,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("6d8a8625-5e94-4eaf-a89b-a919dda09202", 892, "Unique value", "{}"),
 ("93cfb56d-56c4-4340-b539-74ba9ec05024", 892, "Format", "{\"pattern\": \"\\\\\\\\d+\"}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("811ada49-9777-4f8c-84e2-3bb4cc491d5e", 894, "Single value", "{}"),
 ("18788c6b-c6da-4d23-a1af-62401ce1510b", 894, "Unique value", "{}"),
 ("459de780-c8ba-4a69-9a1a-a7dcce99c1c2", 897, "Unique value", "{}"),
@@ -2790,7 +2790,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("8db94a42-9368-4a61-b478-50b35db79599", 1084, "Single value", "{}"),
 ("cc3375d5-1db9-459f-a5bf-4eedf3b6165a", 1084, "Unique value", "{}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("20842f38-b152-49ba-af78-61514eae9dc3", 1085, "Single value", "{}"),
 ("fcaca932-209a-4f91-9c49-ce9a52b3dc89", 1085, "Unique value", "{}"),
 ("9c210678-34cf-465c-9a8d-98732cc7f030", 1085, "Format", "{\"pattern\": \"\\\\\\\\d{1,8}\"}"),
@@ -3250,7 +3250,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("cb9faff6-ac11-470a-82bf-ae014e07593a", 1254, "Format", "{\"pattern\": \"\\\\\\\\d{6}\"}"),
 ("eb20a21e-5827-4c4d-bf3c-f09ac78799b5", 1254, "Item", "{\"property\": \"P21\"}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("d7b65f62-a6bd-4f86-87e4-368a50e5421a", 1255, "Single value", "{}"),
 ("d85bba7f-8f98-4c81-b09e-409827ed5869", 1255, "Unique value", "{}"),
 ("0d90f844-28d1-46a9-b4a7-dc6622f0e324", 1255, "Format", "{\"pattern\": \"[1-9]\\\\\\\\d*\"}"),
@@ -3708,7 +3708,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("6eba3987-d023-42dc-89bd-7287428b1e86", 1431, "Value type", "{\"class\": \"Q5\", \"relation\": \"instance\"}"),
 ("adaf6e15-64d5-4228-9297-e52279cb9106", 1432, "Type", "{\"class\": \"Q134556\", \"relation\": \"instance\"}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("8904c983-9b1f-499a-8065-4aeda62fbbdb", 1433, "Type", "{\"class\": \"Q386724\", \"relation\": \"instance\"}"),
 ("fda785f2-574e-42a1-ae1a-17a8cb472f84", 1433, "Value type", "{\"class\": \"Q386724\", \"relation\": \"instance\"}"),
 ("46d3dae0-3779-4730-becf-9bd9c1161c2a", 1434, "Type", "{\"class\": \"Q386724\", \"relation\": \"instance\"}"),
@@ -4188,7 +4188,7 @@ INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_p
 ("e17ba650-4f86-4f64-8086-c2ad6a23d2af", 1626, "Item", "{\"property\": \"P17\", \"item\": \"Q869\", \"constraint_status\": \"mandatory\"}"),
 ("5e77217f-74e0-4dc7-9c70-2cf0c84f86ea", 1626, "Item", "{\"property\": \"P1435\", \"item\": \"Q16438244\", \"constraint_status\": \"mandatory\"}");
 
-INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES
+INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES
 ("0a7fefb7-6a91-449d-8250-e4dfeea02a55", 1627, "Format", "{\"pattern\": \"[a-z]{3}\", \"constraint_status\": \"mandatory\"}"),
 ("e3b808fc-3233-457f-ac5e-7063fcd05eda", 1627, "Type", "{\"class\": \"Q17376908\", \"relation\": \"instance\", \"constraint_status\": \"mandatory\"}"),
 ("5b4676ee-cc41-417a-92ab-87b99b2b1154", 1627, "Unique value", "{\"constraint_status\": \"mandatory\"}"),
