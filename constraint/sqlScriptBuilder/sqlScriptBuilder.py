@@ -13,9 +13,9 @@ class sqlScriptBuilder:
 
 	MAX_PROPERTY_NUMBER = 2000
 	MAX_SQL_LINE_NUMBER = 455
-	SQL_FILE_NAME = "fill_wdq_constraints_from_templates_with_json_blob.sql"
+	SQL_FILE_NAME = "fill_wdqa_constraints_from_templates_with_json_blob.sql"
 
-	SQL_SCRIPT_HEAD = "INSERT INTO wdq_constraints (constraint_guid, pid, constraint_qid, constraint_parameters) VALUES\n"
+	SQL_SCRIPT_HEAD = "INSERT INTO wdqa_constraints (constraint_guid, pid, constraint_type_qid, constraint_parameters) VALUES\n"
 
 	parameters = {}
 

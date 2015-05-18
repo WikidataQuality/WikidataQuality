@@ -1,0 +1,172 @@
+% Koma-Script Basisklasse
+\documentclass[a4paper,12pt,headsepline,titlepage,bibtotoc]{scrartcl}
+
+\usepackage[ngerman]{babel}		% deutsche Trennmuster
+\usepackage[utf8]{inputenc}		% direkte Eingabe von Umlauten & Co. (Vorsicht: Encoding im Editor muss auch UTF-8 sein!)
+
+\usepackage[T1]{fontenc}			% T1-Schriften
+\usepackage{subfiles}
+\usepackage{mathptmx}			% Times/Mathe \rmdefault
+\usepackage[scaled=.90]{helvet}	% Skalierte Helvetica \sfdefault
+\usepackage{courier}			% Courier \ttdefault
+\usepackage{float}
+\usepackage{subfig}
+\usepackage{tabularx}
+
+% Zusatzpakete für mehr mathematische Symbole, Einfügen von Grafiken 
+% und bessere Bildunterschriften
+\usepackage{amsmath,amsthm,amsfonts,amssymb,graphicx,caption,listings}
+% Wenn man direkt mit dem pdflatex eine PDF-Datei erzeugt, sollten diese beiden Pakete eingebunden werden
+\usepackage{hyperref} % Hyperlinks anklickbar
+\usepackage{ae,aecompl} % bessere Bildschirmschriftarten usw.
+\usepackage{algpseudocode}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[verbose]{placeins}
+\usepackage{soul}
+\usepackage{todonotes}
+
+\newcommand{\anjanote}[1]{\todo[color=yellow!40]{Anja: #1}}
+\newcommand{\christiannote}[1]{\todo[color=blue!40]{Christian: #1}}
+
+\newcommand{\here}{.} % should point to the dir of the current tex file
+\providecommand{\rootdir}{.} % should point to the dir of the main tex file
+
+\usepackage{csquotes} 
+\usepackage[style=alphabetic,backend=bibtex]{biblatex}
+\bibliography{\rootdir/referenzen}
+
+\usepackage[xindy]{imakeidx}
+\makeindex
+
+\pagestyle{headings}
+% \parindent 0pt
+
+\lstset{ %
+  captionpos=b,                    % sets the caption-position to bottom
+}
+
+% Abstand der Kopfzeile vom Text:
+\headsep4mm
+
+\typearea[current]{current}     % Satzspiegel neu berechnen
+
+% andere Bildunterschrift mit Hilfe von caption
+\renewcommand{\figurename}{Abb.}
+
+
+\lstset{literate=%
+    {Ö}{{\"O}}1
+    {Ä}{{\"A}}1
+    {Ü}{{\"U}}1
+    {ß}{{\ss}}1
+    {ü}{{\"u}}1
+    {ä}{{\"a}}1
+    {ö}{{\"o}}1
+    {~}{{\textasciitilde}}1
+}
+\lstset{escapeinside={(*@}{@*)}}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  showstringspaces=false,
+  commentstyle=\color{gray}\upshape
+}
+\lstdefinelanguage{XML}
+{
+  numbers=left,
+  numberstyle=\scriptsize,
+  numbersep=8pt,
+  moredelim=*[is][\color{Red}]{+}{+},
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{Black},
+  identifierstyle=\color{Blue},
+  keywordstyle=\color{Mahogany},
+  morekeywords={xmlns,version,type,TimeStamp,TempUnit,Interval,IntervalUnit,StartTime,serializeAs,"}, % name
+%  literate={"}{+"}{1},
+} 
+\lstdefinelanguage{json}{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  numbers=left,
+  numberstyle=\scriptsize,
+  stepnumber=1,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true
+}
+
+
+\subject{Bachelorarbeit}
+\title{
+	\includegraphics*[width=0.4\textwidth]{hpi_logo.png}\\
+	\vspace{24pt}
+	PropertySuggester
+}
+\subtitle{
+	Unterstützung der Datenvervollständigung von Wikidata mittels Assoziationsregeln
+}
+
+\author{
+	Christian Dullweber
+	\small{\url{christian.dullweber@student.hpi.uni-potsdam.de}}\\
+	Moritz Finke
+	\small{\url{moritz.finke@student.hpi.uni-potsdam.de}}\\
+	Felix Niemeyer
+	\small{\url{felix.niemeyer@student.hpi.uni-potsdam.de}}\\
+	Virginia Weidhaas
+	\small{\url{virginia.weidhaas@student.hpi.uni-potsdam.de}}
+}
+
+\date{Eingereicht am 30.06.2014}
+
+\publishers{
+	Betreuer:\\
+	Anja Jentzsch\\
+	Prof. Dr. Felix Naumann
+}
+\begin{document}
+
+\maketitle
+
+\clearpage
+\mbox{}
+\pagestyle{plain}
+
+\subfile{abstract}
+
+\clearpage
+\mbox{}
+\pagestyle{plain}
+\clearpage
+\mbox{}
+\pagestyle{plain}
+
+\tableofcontents
+\clearpage
+
+\subfile{einleitung}
+\subfile{relatedwork}
+
+\clearpage
+
+\begin{appendix}
+
+\end{appendix}
+\clearpage
+
+\clearpage
+
+\printbibliography
+
+\clearpage
+\mbox{}
+\pagestyle{plain}
+
+\clearpage
+\mbox{}
+\pagestyle{plain}
+
+\subfile{Erklaerung}
+
+\end{document}
