@@ -1,0 +1,21 @@
+Ensuring Data Quality in Wikidata with Constraints and External Databases
+
+	Vizualizing and Managing Potentially Incorrect Data
+
+		API Interaction
+			? Constraints
+				... ???
+			? External Validation
+				... running crosscheck via the API
+			Quality
+				... retrieving violations
+				... modifying violations
+				... importing violations (?)
+
+		Vizualisation
+			... on an Item's page
+			... on Special Pages
+				... Constraints
+				... External Validation
+
+		Integration into Wikidata (Hooks) ??
