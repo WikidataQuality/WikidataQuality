@@ -1,21 +1,74 @@
 Ensuring Data Quality in Wikidata with Constraints and External Databases
 
+	Introduction
+
+		Who we are and what we do
+		Different Modules
+
+		Violation Tabelle??
+
+	Constraints
+
+		(Absprechen: Constraint Tabelle)
+
+		Modelling Constraints in Wikidata (Andreas)
+
+			Wikidata Data Model
+				... in general
+				... how constraints looked before
+				... how contraints look now
+			Different Approaches
+				... Building Blocks
+				... Directly
+				... we chose ... because
+			New Constraints
+				... what
+				... how many
+				... naming things
+			Migration
+				... how it works
+			... and why our new constraints are much better
+
+		Data Validation Using Constraints (Dimitri)
+
+			Architektur (Diagramme)
+			Abläufe (Diagramme)
+			Ablauf der Entwicklung (Special Page, Migration, Constraint Tabelle up to date halten)
+
+
+	External Databases
+
+		Integrating External Data (Sören)
+
+			Anforderungen an Datenbanken
+				... API oder Dump?
+			Dump Converter
+				... Mapping (am Beispiel)
+				... Mapping fest im Code oder Statements on Properties
+			Datenformate umwandeln
+			Überleitung: Ausgabe als CSV und in Tabelle schreiben
+
+		Data Validation Using External Data (Dominic)
+
+			Vorbedingungen (Strings in Tabelle, Datatypes in Wikidata)
+			Eigenschaften des Cross-Checks (generisch, erweiterbar...)
+			Similarity Measures (Einstieg)
+			Ablauf beschreiben & Implementierung Similarity Check
+			Architektur (Fokus auf Vergleich)
+			Reference Check?
+
 	Vizualizing and Managing Potentially Incorrect Data
 
-		API Interaction
-			? Constraints
-				... ???
-			? External Validation
-				... running crosscheck via the API
-			Quality
-				... retrieving violations
-				... modifying violations
-				... importing violations (?)
-
 		Vizualisation
-			... on an Item's page
+			... on an Item's page (Auswahl der Icons, Farben, Ansätze, Ranks, Text, ...)
 			... on Special Pages
+				... Violations
 				... Constraints
 				... External Validation
 
-		Integration into Wikidata (Hooks) ??
+		API
+			... Import
+			... Modify (Exception)
+
+		Integration into Wikidata (Hooks)
+			... Violation Table aktuell halten
