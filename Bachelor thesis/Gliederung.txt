@@ -19,3 +19,18 @@ Ensuring Data Quality in Wikidata with Constraints and External Databases
 				... External Validation
 
 		Integration into Wikidata (Hooks) ??
+
+	Evalating the Wikidata Quality Extension
+		1. Introduction
+		2. User study / Comparison to existing solution
+			2.1. [Gegenüberstellung] Ivan vs. BP2014N1
+			2.2. Comparison of strengths and weaknesses of every aproach
+			2.3. User Study
+				2.3.1. [Versuchsaufbau]
+				2.3.2. How many errors are found
+				2.3.3. How fast have they be found
+				2.3.4. [Fazit]
+		3. Evaluation of usage in production
+			3.1. Evaluating a Wikimedia product - Difficulties and the solution + its strengths and weaknesses
+			3.2. whether and how often a visit of a special page leads to an edit on an entity page 
+			3.3. whether those edits lead to a (significant) reduction of violations and mismatches our tools find
