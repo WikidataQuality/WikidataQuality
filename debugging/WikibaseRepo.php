@@ -18,6 +18,7 @@ use Wikibase\Api\ApiHelperFactory;
 use Wikibase\ChangeOp\ChangeOpFactoryProvider;
 use Wikibase\DataModel\Claim\ClaimGuidParser;
 use Wikibase\DataModel\Entity\BasicEntityIdParser;
+use Wikibase\DataModel\Entity\Diff\EntityDiffer;
 use Wikibase\DataModel\Entity\DispatchingEntityIdParser;
 use Wikibase\DataModel\Entity\EntityIdParser;
 use Wikibase\DataModel\Entity\Item;
@@ -71,7 +72,6 @@ use Wikibase\Repo\Notifications\ChangeTransmitter;
 use Wikibase\Repo\Notifications\DatabaseChangeTransmitter;
 use Wikibase\Repo\Notifications\DummyChangeTransmitter;
 use Wikibase\Repo\Store\EntityPermissionChecker;
-use Wikibase\Settings;
 use Wikibase\SettingsArray;
 use Wikibase\SnakFactory;
 use Wikibase\SqlStore;
@@ -196,7 +196,7 @@ class WikibaseRepo {
 		static $instance = null;
 
 		if ( $instance === null ) {
-			$instance = new self( Settings::singleton() );
+			$instance = new self( new SettingsArray( $GLOBALS['wgWBRepoSettings'] ) );
 		}
 
 		return $instance;
@@ -264,6 +264,7 @@ class WikibaseRepo {
 		return new EntityChangeFactory(
 			$this->getStore()->getChangesTable(),
 			$this->getEntityFactory(),
+			new EntityDiffer(),
 			$changeClasses
 		);
 	}
@@ -308,7 +309,8 @@ class WikibaseRepo {
         }
         else {
             return $this->getStore()->getEntityRevisionLookup( $uncached );
-        }	}
+        }
+	}
 
 	/**
 	 * @since 0.5
@@ -520,10 +522,7 @@ class WikibaseRepo {
 	 * @return TermBuffer
 	 */
 	public function getTermBuffer() {
-        return new BufferingTermLookup(
-            $this->getStore()->getTermIndex(),
-            1000 // @todo: configure buffer size
-        );
+		return $this->getTermLookup();
 	}
 
 	/**
@@ -625,11 +624,11 @@ class WikibaseRepo {
 	}
 
 	/**
-	 * @param MessageParameterFormatter $formatter
+	 * @param ValueFormatter $formatter
 	 *
 	 * @return ExceptionLocalizer[]
 	 */
-	private function getExceptionLocalizers( MessageParameterFormatter $formatter ) {
+	private function getExceptionLocalizers( ValueFormatter $formatter ) {
 		return array(
 			'MessageException' => new MessageExceptionLocalizer(),
 			'ParseException' => new ParseExceptionLocalizer(),
@@ -899,20 +898,27 @@ class WikibaseRepo {
 	 */
 	protected function getInternalDeserializerFactory() {
 		return new DeserializerFactory(
-			new DataValueDeserializer( array(
-				'boolean' => 'DataValues\BooleanValue',
-				'number' => 'DataValues\NumberValue',
-				'string' => 'DataValues\StringValue',
-				'unknown' => 'DataValues\UnknownValue',
-				'globecoordinate' => 'DataValues\Geo\Values\GlobeCoordinateValue',
-				'monolingualtext' => 'DataValues\MonolingualTextValue',
-				'multilingualtext' => 'DataValues\MultilingualTextValue',
-				'quantity' => 'DataValues\QuantityValue',
-				'time' => 'DataValues\TimeValue',
-				'wikibase-entityid' => 'Wikibase\DataModel\Entity\EntityIdValue',
-			) ),
+			$this->getDataValueDeserializer(),
 			$this->getEntityIdParser()
 		);
+	}
+
+	/**
+	 * @return Deserializer
+	 */
+	public function getDataValueDeserializer() {
+		return new DataValueDeserializer( array(
+			'boolean' => 'DataValues\BooleanValue',
+			'number' => 'DataValues\NumberValue',
+			'string' => 'DataValues\StringValue',
+			'unknown' => 'DataValues\UnknownValue',
+			'globecoordinate' => 'DataValues\Geo\Values\GlobeCoordinateValue',
+			'monolingualtext' => 'DataValues\MonolingualTextValue',
+			'multilingualtext' => 'DataValues\MultilingualTextValue',
+			'quantity' => 'DataValues\QuantityValue',
+			'time' => 'DataValues\TimeValue',
+			'wikibase-entityid' => 'Wikibase\DataModel\Entity\EntityIdValue',
+		) );
 	}
 
 	/**
