@@ -5,8 +5,8 @@ Debugging
 Instead of importing or creating entites, the *Wikidata API lookups* can easily be used for accessing Wikidata entities by using the API.
 
 ### Installation
-1. Make sure, that the Wikidata extension is up to date. Otherwise update it first by running ```git pull``` and ```composer update``` in ```/extensions/Wikidata```. 
-2. Copy/Overwrite the files ```WikidataApiLookup.php```, ```WikidataApiTermLookup.php```, ```WikidataApiEntityLookup.php```, ```WikidataApiEntityRevisionLookup.php```, and ```WikibaseRepo.php``` to ```/extensions/Wikidata/extensions/Wikibase/repo/includes```.
+1. Make sure, that the Wikidata extension is up to date. Otherwise update it first by running ```git pull``` and ```composer update``` in ```/extensions/Wikidata```.
+2. Copy/Overwrite all files to ```/extensions/Wikidata/extensions/Wikibase/repo/includes```.
 3. Run ```composer update``` in ```/extensions/Wikidata```. If composer asks you about changes, stash them by typing ```s```.
 
 ### Usage
