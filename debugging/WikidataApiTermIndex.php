@@ -6,8 +6,10 @@ use BadMethodCallException;
 use Wikibase\DataModel\Entity\EntityDocument;
 use Wikibase\DataModel\Entity\EntityId;
 use Wikibase\Lib\Store\LabelConflictFinder;
-use Wikibase\Term;
+use Wikibase\SqlStore;
 use Wikibase\TermIndex;
+use Wikibase\TermIndexEntry;
+use Wikibase\TermSqlIndex;
 
 /**
  * Class WikidataApiTermIndex
@@ -16,6 +18,18 @@ use Wikibase\TermIndex;
  * @licence GNU GPL v2+
  */
 class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, LabelConflictFinder {
+
+	/**
+	 * @var TermIndex|LabelConflictFinder
+	 */
+	private $fallbackTermIndex;
+
+	/**
+	 * @param TermIndex|LabelConflictFinder $fallbackTermIndex
+	 */
+	public function __construct( $fallbackTermIndex ) {
+		$this->fallbackTermIndex = $fallbackTermIndex;
+	}
 
 	/**
 	 * Saves the terms of the provided entity in the term cache.
@@ -27,7 +41,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @return boolean Success indicator
 	 */
 	public function saveTermsOfEntity( EntityDocument $entity ) {
-		throw new BadMethodCallException( 'Wikidata API services are read-only.' );
+		$this->fallbackTermIndex->saveTermsOfEntity( $entity );
 	}
 
 	/**
@@ -40,7 +54,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @return boolean Success indicator
 	 */
 	public function deleteTermsOfEntity( EntityId $entityId ) {
-		throw new BadMethodCallException( 'Wikidata API services are read-only.' );
+		$this->fallbackTermIndex->deleteTermsOfEntity( $entityId );
 	}
 
 	/**
@@ -52,7 +66,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @param string[]|null $languageCodes The desired languages, given as language codes.
 	 *        If null, all languages are returned.
 	 *
-	 * @return Term[]
+	 * @return TermIndexEntry[]
 	 */
 	public function getTermsOfEntity(
 		EntityId $entityId,
@@ -63,13 +77,13 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 		if( $languageCodes ) {
 			$parameter['languages'] = implode( '|', $languageCodes );
 		}
-		if( in_array( Term::TYPE_LABEL, $termTypes ) ) {
+		if( in_array( TermIndexEntry::TYPE_LABEL, $termTypes ) ) {
 			$parameter['props'][] = 'labels';
 		}
-		if( in_array( Term::TYPE_ALIAS, $termTypes ) ) {
+		if( in_array( TermIndexEntry::TYPE_ALIAS, $termTypes ) ) {
 			$parameter['props'][] = 'aliases';
 		}
-		if( in_array( Term::TYPE_DESCRIPTION, $termTypes ) ) {
+		if( in_array( TermIndexEntry::TYPE_DESCRIPTION, $termTypes ) ) {
 			$parameter['props'][] = 'descriptions';
 		}
 		$parameter['props'] = implode( '|', $parameter['props'] );
@@ -77,7 +91,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 		$entity = $this->requestEntity( $entityId, $parameter );
 		if( $entity ) {
 			$terms = array();
-			if( in_array( Term::TYPE_LABEL, $termTypes ) ) {
+			if( in_array( TermIndexEntry::TYPE_LABEL, $termTypes ) ) {
 				$labels = array();
 				if( $languageCodes ) {
 					foreach ( $languageCodes as $languageCode ) {
@@ -88,22 +102,22 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 					$labels = $entity->getFingerprint()->getLabels();
 				}
 				foreach ( $labels as $languageCode => $label ) {
-					$terms[] = new Term(
+					$terms[] = new TermIndexEntry(
 						array(
-							'termType' => Term::TYPE_LABEL,
+							'termType' => TermIndexEntry::TYPE_LABEL,
 							'termText' => $label->getText(),
 							'termLanguage' => $languageCode
 						)
 					);
 				}
 			}
-			if( in_array( Term::TYPE_ALIAS, $termTypes ) ) {
+			if( in_array( TermIndexEntry::TYPE_ALIAS, $termTypes ) ) {
 				$aliases = $entity->getAllAliases( $languageCodes );
 				foreach ( $aliases as $languageCode => $aliasesOfLanguage ) {
 					foreach ( $aliasesOfLanguage as $alias ) {
-						$terms[] = new Term(
+						$terms[] = new TermIndexEntry(
 							array(
-								'termType' => Term::TYPE_ALIAS,
+								'termType' => TermIndexEntry::TYPE_ALIAS,
 								'termText' => $alias,
 								'termLanguage' => $languageCode
 							)
@@ -111,12 +125,12 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 					}
 				}
 			}
-			if( in_array( Term::TYPE_DESCRIPTION, $termTypes ) ) {
+			if( in_array( TermIndexEntry::TYPE_DESCRIPTION, $termTypes ) ) {
 				$descriptions = $entity->getDescriptions( $languageCodes );
 				foreach ( $descriptions as $languageCode => $description ) {
-					$terms[] = new Term(
+					$terms[] = new TermIndexEntry(
 						array(
-							'termType' => Term::TYPE_DESCRIPTION,
+							'termType' => TermIndexEntry::TYPE_DESCRIPTION,
 							'termText' => $description,
 							'termLanguage' => $languageCode
 						)
@@ -140,7 +154,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @param string[]|null $languageCodes The desired languages, given as language codes.
 	 *        If null, all languages are returned.
 	 *
-	 * @return Term[]
+	 * @return TermIndexEntry[]
 	 */
 	public function getTermsOfEntities(
 		array $entityIds,
@@ -170,7 +184,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 *
 	 * @since 0.2
 	 *
-	 * @param Term[] $terms
+	 * @param TermIndexEntry[] $terms
 	 * @param string|null $termType
 	 * @param string|null $entityType
 	 * @param array $options
@@ -179,7 +193,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 *        - prefixSearch: boolean, default false
 	 *        - LIMIT: int, defaults to none
 	 *
-	 * @return Term[]
+	 * @return TermIndexEntry[]
 	 */
 	public function getMatchingTerms(
 		array $terms,
@@ -187,7 +201,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 		$entityType = null,
 		array $options = array()
 	) {
-		throw new BadMethodCallException( 'Not implemented so far.' );
+		$this->fallbackTermIndex->getMatchingTerms( $terms, $termType, $entityType, $options );
 	}
 
 	/**
@@ -200,7 +214,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 *
 	 * @since 0.4
 	 *
-	 * @param Term[] $terms
+	 * @param TermIndexEntry[] $terms
 	 * @param string|null $entityType
 	 * @param array $options
 	 *        Accepted options are:
@@ -211,7 +225,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @return EntityId[]
 	 */
 	public function getMatchingIDs( array $terms, $entityType = null, array $options = array() ) {
-		throw new BadMethodCallException( 'Not implemented so far.' );
+		$this->fallbackTermIndex->getMatchingIDs( $terms, $entityType, $options );
 	}
 
 	/**
@@ -222,7 +236,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @return boolean Success indicator
 	 */
 	public function clear() {
-		throw new BadMethodCallException( 'There is nothing to clear.' );
+		$this->fallbackTermIndex->clear();
 	}
 
 
@@ -236,10 +250,10 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @param string $entityType The entity type to consider for conflicts.
 	 * @param string[] $labels The labels to look for, with language codes as keys.
 	 *
-	 * @return Term[]
+	 * @return TermIndexEntry[]
 	 */
 	public function getLabelConflicts( $entityType, array $labels ) {
-		throw new BadMethodCallException( 'Not implemented so far.' );
+		$this->fallbackTermIndex->getLabelConflicts( $entityType, $labels );
 	}
 
 	/**
@@ -256,9 +270,9 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @param string[] $labels The labels to look for, with language codes as keys.
 	 * @param string[] $descriptions The descriptions to consider (if desired), with language codes as keys.
 	 *
-	 * @return Term[]
+	 * @return TermIndexEntry[]
 	 */
 	public function getLabelWithDescriptionConflicts( $entityType, array $labels, array $descriptions ) {
-		throw new BadMethodCallException( 'Not implemented so far.' );
+		$this->fallbackTermIndex->getLabelWithDescriptionConflicts( $entityType, $labels, $descriptions );
 	}
 }

@@ -162,7 +162,7 @@ class SqlStore implements Store {
 	 */
 	public function getTermIndex() {
 		if ( defined( 'USE_WIKIDATA_API_LOOKUP' ) && USE_WIKIDATA_API_LOOKUP ) {
-			return new WikidataApiTermIndex();
+			return new WikidataApiTermIndex( $this->newTermIndex() );
 		}
 		else {
 			if ( !$this->termIndex ) {
