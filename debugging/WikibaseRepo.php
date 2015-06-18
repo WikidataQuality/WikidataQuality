@@ -7,11 +7,13 @@ use DataValues\DataValueFactory;
 use DataValues\Deserializers\DataValueDeserializer;
 use DataValues\Serializers\DataValueSerializer;
 use Deserializers\Deserializer;
+use IContextSource;
 use RuntimeException;
 use Serializers\Serializer;
 use SiteSQLStore;
 use SiteStore;
 use StubObject;
+use User;
 use ValueFormatters\FormatterOptions;
 use ValueFormatters\ValueFormatter;
 use Wikibase\Api\ApiHelperFactory;
@@ -48,6 +50,7 @@ use Wikibase\Lib\Localizer\MessageExceptionLocalizer;
 use Wikibase\Lib\Localizer\ParseExceptionLocalizer;
 use Wikibase\Lib\OutputFormatSnakFormatterFactory;
 use Wikibase\Lib\OutputFormatValueFormatterFactory;
+use Wikibase\Lib\Parsers\SuffixEntityIdParser;
 use Wikibase\Lib\PropertyInfoDataTypeLookup;
 use Wikibase\Lib\SnakConstructionService;
 use Wikibase\Lib\SnakFormatter;
@@ -62,9 +65,12 @@ use Wikibase\Lib\WikibaseContentLanguages;
 use Wikibase\Lib\WikibaseDataTypeBuilders;
 use Wikibase\Lib\WikibaseSnakFormatterBuilders;
 use Wikibase\Lib\WikibaseValueFormatterBuilders;
+use Wikibase\ReferencedEntitiesFinder;
 use Wikibase\Repo\Content\EntityContentFactory;
 use Wikibase\Repo\Content\ItemHandler;
 use Wikibase\Repo\Content\PropertyHandler;
+use Wikibase\Repo\Hooks\EditFilterHookRunner;
+use Wikibase\Repo\Interactors\RedirectCreationInteractor;
 use Wikibase\Repo\Localizer\ChangeOpValidationExceptionLocalizer;
 use Wikibase\Repo\Localizer\MessageParameterFormatter;
 use Wikibase\Repo\Notifications\ChangeNotifier;
@@ -310,6 +316,30 @@ class WikibaseRepo {
         else {
             return $this->getStore()->getEntityRevisionLookup( $uncached );
         }
+	}
+
+	/**
+	 * @since 0.5
+	 *
+	 * @param User $user
+	 * @param IContextSource $context
+	 *
+	 * @return RedirectCreationInteractor
+	 */
+	public function newRedirectCreationInteractor( User $user, IContextSource $context ) {
+		return new RedirectCreationInteractor(
+			$this->getEntityRevisionLookup( 'uncached' ),
+			$this->getEntityStore(),
+			$this->getEntityPermissionChecker(),
+			$this->getSummaryFormatter(),
+			$user,
+			new EditFilterHookRunner(
+				$this->getEntityTitleLookup(),
+				$this->getEntityContentFactory(),
+				$context
+			),
+			$this->getStore()->getEntityRedirectLookup()
+		);
 	}
 
 	/**
@@ -565,7 +595,18 @@ class WikibaseRepo {
 			$wgContLang,
 			new FormatterLabelDescriptionLookupFactory( $termLookup ),
 			new LanguageNameLookup(),
+			$this->getLocalEntityUriParser(),
 			$this->getEntityTitleLookup()
+		);
+	}
+
+	/**
+	 * @return EntityIdParser
+	 */
+	private function getLocalEntityUriParser() {
+		return new SuffixEntityIdParser(
+			$this->getSettings()->getSetting( 'conceptBaseUri' ),
+			$this->getEntityIdParser()
 		);
 	}
 
@@ -1060,6 +1101,7 @@ class WikibaseRepo {
 			$this->getEntityContentFactory(),
 			new ValuesFinder( $this->getPropertyDataTypeLookup() ),
 			$this->getLanguageFallbackChainFactory(),
+			new ReferencedEntitiesFinder( $this->getLocalEntityUriParser() ),
 			$templateFactory
 		);
 	}
