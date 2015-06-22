@@ -9,7 +9,7 @@ use Wikibase\DataModel\Entity\EntityId;
 
 /**
  * Class WikidataApiTermLookup
- * @package Wikibase\Repor
+ * @package Wikibase\Repo
  * @author BP2014N1
  * @licence GNU GPL v2+
  */

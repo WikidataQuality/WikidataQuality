@@ -31,7 +31,7 @@ class WikidataApiEntityLookup extends WikidataApiLookup implements EntityLookup
     public function hasEntity( EntityId $entityId )
     {
         // Send request
-        $responseBody = $this->sendRequest( $entityId );
+        $responseBody = $this->requestEntity( $entityId );
 
         // Parse response
         if ( $this->parseApiResponse( $entityId, $responseBody ) ) {

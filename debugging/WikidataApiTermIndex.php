@@ -28,6 +28,7 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	 * @param TermIndex|LabelConflictFinder $fallbackTermIndex
 	 */
 	public function __construct( $fallbackTermIndex ) {
+		parent::__construct();
 		$this->fallbackTermIndex = $fallbackTermIndex;
 	}
 
@@ -243,17 +244,21 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 	/**
 	 * Returns a list of Terms that conflict with (that is, match) the given labels.
 	 * Conflicts are defined to be inside on type of entity and language.
+	 * If $aliases is not null (but possibly empty), conflicts between aliases and labels
+	 * are also considered.
 	 *
 	 * @note: implementations must return *some* conflicts if there are *any* conflicts,
 	 * but are not required to return *all* conflicts.
 	 *
 	 * @param string $entityType The entity type to consider for conflicts.
 	 * @param string[] $labels The labels to look for, with language codes as keys.
+	 * @param string[][]|null $aliases The aliases to look for, with language codes as keys. If null,
+	 *        conflicts with aliases are not considered.
 	 *
 	 * @return TermIndexEntry[]
 	 */
-	public function getLabelConflicts( $entityType, array $labels ) {
-		$this->fallbackTermIndex->getLabelConflicts( $entityType, $labels );
+	public function getLabelConflicts( $entityType, array $labels, array $aliases = null ) {
+		$this->fallbackTermIndex->getLabelConflicts( $entityType, $labels, $aliases );
 	}
 
 	/**
