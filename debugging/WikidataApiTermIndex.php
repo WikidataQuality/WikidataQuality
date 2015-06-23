@@ -96,7 +96,10 @@ class WikidataApiTermIndex extends WikidataApiLookup implements TermIndex, Label
 				$labels = array();
 				if( $languageCodes ) {
 					foreach ( $languageCodes as $languageCode ) {
-						$labels[$languageCode] = $entity->getFingerprint()->getLabel( $languageCode );
+						try {
+							$labels[ $languageCode ] = $entity->getFingerprint()->getLabel( $languageCode );
+						}
+						catch( \OutOfBoundsException $ex ) {}
 					}
 				}
 				else {
