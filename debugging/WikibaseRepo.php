@@ -18,7 +18,7 @@ use ValueFormatters\FormatterOptions;
 use ValueFormatters\ValueFormatter;
 use Wikibase\Api\ApiHelperFactory;
 use Wikibase\ChangeOp\ChangeOpFactoryProvider;
-use Wikibase\DataModel\Claim\ClaimGuidParser;
+use Wikibase\DataModel\Statement\StatementGuidParser;
 use Wikibase\DataModel\Entity\BasicEntityIdParser;
 use Wikibase\DataModel\Entity\Diff\EntityDiffer;
 use Wikibase\DataModel\Entity\DispatchingEntityIdParser;
@@ -71,12 +71,15 @@ use Wikibase\Repo\Content\ItemHandler;
 use Wikibase\Repo\Content\PropertyHandler;
 use Wikibase\Repo\Hooks\EditFilterHookRunner;
 use Wikibase\Repo\Interactors\RedirectCreationInteractor;
+use Wikibase\Repo\Interactors\TermIndexSearchInteractor;
+use Wikibase\Repo\LinkedData\EntityDataFormatProvider;
 use Wikibase\Repo\Localizer\ChangeOpValidationExceptionLocalizer;
 use Wikibase\Repo\Localizer\MessageParameterFormatter;
 use Wikibase\Repo\Notifications\ChangeNotifier;
 use Wikibase\Repo\Notifications\ChangeTransmitter;
 use Wikibase\Repo\Notifications\DatabaseChangeTransmitter;
-use Wikibase\Repo\Notifications\DummyChangeTransmitter;
+use Wikibase\Repo\Notifications\HookChangeTransmitter;
+use Wikibase\Repo\Notifications\MulticastChangeTransmitter;
 use Wikibase\Repo\Store\EntityPermissionChecker;
 use Wikibase\SettingsArray;
 use Wikibase\SnakFactory;
@@ -345,6 +348,22 @@ class WikibaseRepo {
 	/**
 	 * @since 0.5
 	 *
+	 * @param string $displayLanguageCode
+	 *
+	 * @return TermIndexSearchInteractor
+	 */
+	public function newTermSearchInteractor( $displayLanguageCode ) {
+		return new TermIndexSearchInteractor(
+			$this->getStore()->getTermIndex(),
+			$this->getLanguageFallbackChainFactory(),
+			$this->getTermLookup(),
+			$displayLanguageCode
+		);
+	}
+
+	/**
+	 * @since 0.5
+	 *
 	 * @return EntityStore
 	 */
 	public function getEntityStore() {
@@ -437,10 +456,10 @@ class WikibaseRepo {
 	/**
 	 * @since 0.5
 	 *
-	 * @return ClaimGuidParser
+	 * @return StatementGuidParser
 	 */
-	public function getClaimGuidParser() {
-		return new ClaimGuidParser( $this->getEntityIdParser() );
+	public function getStatementGuidParser() {
+		return new StatementGuidParser( $this->getEntityIdParser() );
 	}
 
 	/**
@@ -453,7 +472,7 @@ class WikibaseRepo {
 			$this->getEntityConstraintProvider(),
 			new ClaimGuidGenerator(),
 			$this->getClaimGuidValidator(),
-			$this->getClaimGuidParser(),
+			$this->getStatementGuidParser(),
 			$this->getSnakValidator(),
 			$this->getTermValidatorFactory(),
 			$this->getSiteStore()
@@ -494,6 +513,19 @@ class WikibaseRepo {
 		}
 
 		return $this->languageFallbackChainFactory;
+	}
+
+	/**
+	 * @since 0.5
+	 *
+	 * @return LanguageFallbackLabelDescriptionLookupFactory
+	 */
+	public function getLanguageFallbackLabelDescriptionLookupFactory() {
+		return new LanguageFallbackLabelDescriptionLookupFactory(
+			$this->getLanguageFallbackChainFactory(),
+			$this->getTermLookup(),
+			$this->getTermBuffer()
+		);
 	}
 
 	/**
@@ -827,26 +859,27 @@ class WikibaseRepo {
 	}
 
 	/**
-	 * @return ChangeTransmitter
+	 * @return ChangeTransmitter[]
 	 */
-	private function getChangeTransmitter() {
+	private function getChangeTransmitters() {
+		$transmitters = array();
+
+		$transmitters[] = new HookChangeTransmitter( 'WikibaseChangeNotification' );
+
 		if ( $this->settings->getSetting( 'useChangesTable' ) ) {
-			return new DatabaseChangeTransmitter();
+			$transmitters[] = new DatabaseChangeTransmitter();
 		}
-		else {
-			return new DummyChangeTransmitter();
-		}
+
+		return $transmitters;
 	}
 
 	/**
 	 * @return ChangeNotifier
 	 */
 	public function getChangeNotifier() {
-		// TODO: Instead of having getChangeTransmitter return a dummy,
-		//       return a dummy from here if useChangesTable is not set.
 		return new ChangeNotifier(
 			$this->getEntityChangeFactory(),
-			$this->getChangeTransmitter()
+			$this->getChangeTransmitters()
 		);
 	}
 
@@ -917,11 +950,11 @@ class WikibaseRepo {
 	/**
 	 * @return Serializer
 	 */
-	public function getInternalClaimSerializer() {
+	public function getInternalStatementSerializer() {
 		$claimSerializerClass = $this->settings->getSetting( 'internalClaimSerializerClass' );
 
 		if ( $claimSerializerClass === null ) {
-			return $this->getInternalSerializerFactory()->newClaimSerializer();
+			return $this->getInternalSerializerFactory()->newStatementSerializer();
 		}
 
 		return new $claimSerializerClass();
@@ -930,8 +963,8 @@ class WikibaseRepo {
 	/**
 	 * @return Deserializer
 	 */
-	public function getInternalClaimDeserializer() {
-		return $this->getInternalDeserializerFactory()->newClaimDeserializer();
+	public function getInternalStatementDeserializer() {
+		return $this->getInternalDeserializerFactory()->newStatementDeserializer();
 	}
 
 	/**
@@ -1090,10 +1123,14 @@ class WikibaseRepo {
 			$this->getDataTypeFactory(),
 			$templateFactory,
 			new LanguageNameLookup(),
-			$this->getSettings()->getSetting( 'siteLinkGroups' ),
-			$this->getSettings()->getSetting( 'specialSiteLinkGroups' ),
-			$this->getSettings()->getSetting( 'badgeItems' )
+			$this->settings->getSetting( 'siteLinkGroups' ),
+			$this->settings->getSetting( 'specialSiteLinkGroups' ),
+			$this->settings->getSetting( 'badgeItems' )
 		);
+
+		$entityDataFormatProvider = new EntityDataFormatProvider();
+		$formats = $this->getSettings()->getSetting( 'entityDataFormats' );
+		$entityDataFormatProvider->setFormatWhiteList( $formats );
 
 		return new EntityParserOutputGeneratorFactory(
 			$entityViewFactory,
@@ -1102,7 +1139,8 @@ class WikibaseRepo {
 			new ValuesFinder( $this->getPropertyDataTypeLookup() ),
 			$this->getLanguageFallbackChainFactory(),
 			new ReferencedEntitiesFinder( $this->getLocalEntityUriParser() ),
-			$templateFactory
+			$templateFactory,
+			$entityDataFormatProvider
 		);
 	}
 
