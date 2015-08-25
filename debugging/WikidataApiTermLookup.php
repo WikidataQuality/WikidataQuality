@@ -3,8 +3,8 @@
 namespace Wikibase\Repo;
 
 
-use Wikibase\Lib\Store\TermLookup;
 use Wikibase\DataModel\Entity\EntityId;
+use Wikibase\DataModel\Services\Lookup\TermLookup;
 
 
 /**

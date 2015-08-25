@@ -9,21 +9,22 @@ use HashBagOStuff;
 use MWException;
 use ObjectCache;
 use Revision;
-use Wikibase\DataModel\Entity\EntityIdParser;
+use Wikibase\DataModel\Services\EntityId\EntityIdParser;
+use Wikibase\DataModel\Services\Lookup\EntityLookup;
+use Wikibase\DataModel\Services\Lookup\EntityRedirectLookup;
 use Wikibase\Lib\Reporting\ObservableMessageReporter;
 use Wikibase\Lib\Store\CachingEntityRevisionLookup;
 use Wikibase\Lib\Store\EntityContentDataCodec;
 use Wikibase\Lib\Store\EntityInfoBuilderFactory;
-use Wikibase\Lib\Store\EntityLookup;
-use Wikibase\Lib\Store\EntityRedirectLookup;
 use Wikibase\Lib\Store\EntityRevisionLookup;
 use Wikibase\Lib\Store\EntityStore;
 use Wikibase\Lib\Store\EntityStoreWatcher;
+use Wikibase\Lib\Store\EntityTitleLookup;
 use Wikibase\Lib\Store\LabelConflictFinder;
 use Wikibase\Lib\Store\RedirectResolvingEntityLookup;
 use Wikibase\Lib\Store\RevisionBasedEntityLookup;
-use Wikibase\Lib\Store\SiteLinkStore;
 use Wikibase\Lib\Store\SiteLinkConflictLookup;
+use Wikibase\Lib\Store\SiteLinkStore;
 use Wikibase\Lib\Store\SiteLinkTable;
 use Wikibase\Lib\Store\Sql\PrefetchingWikiPageEntityMetaDataAccessor;
 use Wikibase\Lib\Store\Sql\SqlEntityInfoBuilderFactory;
@@ -32,8 +33,10 @@ use Wikibase\Lib\Store\WikiPageEntityRevisionLookup;
 use Wikibase\Repo\Store\DispatchingEntityStoreWatcher;
 use Wikibase\Repo\Store\EntityPerPage;
 use Wikibase\Repo\Store\SQL\EntityPerPageTable;
+use Wikibase\Repo\Store\SQL\WikiPageEntityRedirectLookup;
 use Wikibase\Repo\Store\WikiPageEntityStore;
 use Wikibase\Repo\WikibaseRepo;
+use Wikibase\Store\EntityIdLookup;
 use Wikibase\Repo\WikidataApiTermIndex;
 use WikiPage;
 
@@ -108,6 +111,16 @@ class SqlStore implements Store {
 	private $entityPrefetcher = null;
 
 	/**
+	 * @var EntityIdLookup
+	 */
+	private $entityIdLookup;
+
+	/**
+	 * @var EntityTitleLookup
+	 */
+	private $entityTitleLookup;
+
+	/**
 	 * @var string
 	 */
 	private $cacheKeyPrefix;
@@ -135,13 +148,19 @@ class SqlStore implements Store {
 	/**
 	 * @param EntityContentDataCodec $contentCodec
 	 * @param EntityIdParser $entityIdParser
+	 * @param EntityIdLookup $entityIdLookup
+	 * @param EntityTitleLookup $entityTitleLookup
 	 */
 	public function __construct(
 		EntityContentDataCodec $contentCodec,
-		EntityIdParser $entityIdParser
+		EntityIdParser $entityIdParser,
+		EntityIdLookup $entityIdLookup,
+		EntityTitleLookup $entityTitleLookup
 	) {
 		$this->contentCodec = $contentCodec;
 		$this->entityIdParser = $entityIdParser;
+		$this->entityIdLookup = $entityIdLookup;
+		$this->entityTitleLookup = $entityTitleLookup;
 
 		//TODO: inject settings
 		$settings = WikibaseRepo::getDefaultInstance()->getSettings();
@@ -238,6 +257,8 @@ class SqlStore implements Store {
 	/**
 	 * Updates the schema of the SQL store to it's latest version.
 	 *
+	 * @TODO: Make this a separatec class!
+	 *
 	 * @since 0.1
 	 *
 	 * @param DatabaseUpdater $updater
@@ -262,8 +283,40 @@ class SqlStore implements Store {
 
 		$this->updateEntityPerPageTable( $updater, $db );
 		$this->updateTermsTable( $updater, $db );
+		$this->updateItemsPerSiteTable( $updater, $db );
+		$this->updateChangesTable( $updater, $db );
 
 		$this->registerPropertyInfoTableUpdates( $updater );
+	}
+
+	/**
+	 * @param DatabaseUpdater $updater
+	 */
+	private function updateItemsPerSiteTable( DatabaseUpdater $updater, DatabaseBase $db ) {
+		// Make wb_items_per_site.ips_site_page VARCHAR(310) - T99459
+		// NOTE: this update doesn't work on SQLite, but it's not needed there anyway.
+		if ( $db->getType() !== 'sqlite' ) {
+			$updater->modifyExtensionField(
+				'wb_items_per_site',
+				'ips_site_page',
+				$this->getUpdateScriptPath( 'MakeIpsSitePageLarger', $db->getType() )
+			);
+		}
+	}
+
+	/**
+	 * @param DatabaseUpdater $updater
+	 */
+	private function updateChangesTable( DatabaseUpdater $updater, DatabaseBase $db ) {
+		// Make wb_changes.change_info MEDIUMBLOB - T108246
+		// NOTE: this update doesn't work on SQLite, but it's not needed there anyway.
+		if ( $db->getType() !== 'sqlite' ) {
+			$updater->modifyExtensionField(
+				'wb_changes',
+				'change_info',
+				$this->getUpdateScriptPath( 'MakeChangeInfoLarger', $db->getType() )
+			);
+		}
 	}
 
 	private function registerPropertyInfoTableUpdates( DatabaseUpdater $updater ) {
@@ -394,7 +447,6 @@ class SqlStore implements Store {
 	private function updateEntityPerPageTable( DatabaseUpdater $updater, DatabaseBase $db ) {
 		// Update from 0.1. or 0.2.
 		if ( !$db->tableExists( 'wb_entity_per_page' ) ) {
-
 			$updater->addExtensionTable(
 				'wb_entity_per_page',
 				$this->getUpdateScriptPath( 'AddEntityPerPage', $db->getType() )
@@ -403,7 +455,6 @@ class SqlStore implements Store {
 			$updater->addPostDatabaseUpdateMaintenance(
 				'Wikibase\Repo\Maintenance\RebuildEntityPerPage'
 			);
-
 		} elseif ( $this->useRedirectTargetColumn ) {
 			$updater->addExtensionField(
 				'wb_entity_per_page',
@@ -422,7 +473,6 @@ class SqlStore implements Store {
 	private function updateTermsTable( DatabaseUpdater $updater, DatabaseBase $db ) {
 		// ---- Update from 0.1 or 0.2. ----
 		if ( !$db->fieldExists( 'wb_terms', 'term_search_key' ) ) {
-
 			$updater->addExtensionField(
 				'wb_terms',
 				'term_search_key',
@@ -509,7 +559,12 @@ class SqlStore implements Store {
 	 * @return EntityRedirectLookup
 	 */
 	public function getEntityRedirectLookup() {
-		return $this->newEntityPerPage();
+		$wikibaseRepo = WikibaseRepo::getDefaultInstance();
+
+		return new WikiPageEntityRedirectLookup(
+			$this->entityTitleLookup,
+			$this->entityIdLookup
+		);
 	}
 
 	/**

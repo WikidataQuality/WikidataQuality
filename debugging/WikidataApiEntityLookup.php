@@ -4,7 +4,7 @@ namespace Wikibase\Repo;
 
 
 use Wikibase\DataModel\Entity\EntityId;
-use Wikibase\Lib\Store\EntityLookup;
+use Wikibase\DataModel\Services\Lookup\EntityLookup;
 
 
 /**
